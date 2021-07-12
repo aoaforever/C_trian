@@ -103,7 +103,41 @@ using namespace cv;
 
 ///////////////////The iterator (safe) method
 //https://docs.opencv.org/4.5.2/db/da5/tutorial_how_to_scan_images.html
-Mat& ScanImageAndReduceIterator(Mat& I, const uchar* const table) {
+//Mat& ScanImageAndReduceIterator(Mat& I, const uchar* const table) {
+//	//  accept only char type matrices
+//	CV_Assert(I.depth() == CV_8U);
+//
+//	const int channels = I.channels();
+//
+//	switch (channels)
+//	{
+//	case 1:
+//	{
+//		MatIterator_<uchar> it, end;
+//		for (it = I.begin<uchar>(), end = I.end<uchar>(); it != end; ++it)
+//			*it = table[*it];
+//		break;
+//	}
+//
+//	case 3:
+//		{
+//		MatIterator_<Vec3b> it, end;
+//		for (it = I.begin<Vec3b>(), end = I.end<Vec3b>(); it != end; ++it) 
+//		{
+//			(*it)[0] = table[(*it)[0]];
+//			(*it)[1] = table[(*it)[1]];
+//			(*it)[2] = table[(*it)[2]];
+//		}
+//		}
+//	
+//	}
+//	return I;
+//
+//
+//}
+
+//////////////////////////////////////////////using Mat::at() for pass through image
+Mat& ScanImageAndReduceRandomAccess(Mat& I, const uchar* const table) {
 	//  accept only char type matrices
 	CV_Assert(I.depth() == CV_8U);
 
@@ -113,42 +147,99 @@ Mat& ScanImageAndReduceIterator(Mat& I, const uchar* const table) {
 	{
 	case 1:
 	{
-		MatIterator_<uchar> it, end;
-		for (it = I.begin<uchar>(), end = I.end<uchar>(); it != end; ++it)
-			*it = table[*it];
+		for (int i = 0; i < I.rows; ++i) {
+			for (int j = 0; j < I.cols; ++j) {
+				I.at<uchar>(i, j) = table[I.at<uchar>(i, j)];
+			}
+
+		}
+
+		
 		break;
 	}
 
 	case 3:
-		{
-		MatIterator_<Vec3b> it, end;
-		for (it = I.begin<Vec3b>(), end = I.end<Vec3b>(); it != end; ++it) 
-		{
-			(*it)[0] = table[(*it)[0]];
-			(*it)[1] = table[(*it)[1]];
-			(*it)[2] = table[(*it)[2]];
+	{
+		Mat_<Vec3b> _I = I;
+
+		for (int i = 0; i < I.rows; ++i) {
+			for (int j = 0; j < I.cols; ++j) {
+				_I(i, j)[0] = table[_I(i, j)[0]];
+				_I(i, j)[1] = table[_I(i, j)[1]];
+				_I(i, j)[2] = table[_I(i, j)[2]];
+			}
 		}
-		}
-	
+
+		I = _I;
+		break;
+
+	}
+
 	}
 	return I;
 
 
 }
+
+//void main() {
+//	int divideWith = 10; // convert our input string to number - C++ style
+//	uchar table[256];
+//	for (int i = 0; i < 256; ++i)
+//		table[i] = (uchar)(divideWith * (i / divideWith));
+//
+//	Mat a;
+//	String path = "Resources/waitSR.jpg";
+//	a = imread(path);
+//	if (a.data == NULL) {
+//		cout << "read failed" << endl;
+//		exit(1);
+//	}
+//
+//	Mat m(512, 512, CV_8UC3, Scalar(200, 255, 3));
+//	//cout << m << endl;
+//	imshow("ii", a);
+//	waitKey(0);
+//
+//	ScanImageAndReduceIterator(a, table);
+//  ScanImageAndReduceRandomAccess(a, table);
+//	imshow("after", a);
+//
+//	waitKey(0);
+//	//cout << m << endl;
+//}
+
+/// <summary>
+/// /////////////////////////////////////////the fast way without writing the logic of scanning image .
+/// </summary>
+
 void main() {
+	const int times = 100;
 	int divideWith = 10; // convert our input string to number - C++ style
 	uchar table[256];
 	for (int i = 0; i < 256; ++i)
 		table[i] = (uchar)(divideWith * (i / divideWith));
 
-	Mat m(512, 512, CV_8UC3,Scalar(200,255,3));
-	//cout << m << endl;
-	imshow("ii", m);
-	waitKey(0);
+	//![table-init]
+	Mat lookUpTable(1, 256, CV_8U);//构建一个Mat类型变量，1行256列。8位uchar
+	uchar* p = lookUpTable.ptr();
+	for (int i = 0; i < 256; ++i) {
+		p[i] = table[i];//通过ptr（）指针，将table[i]的值赋给lookUpTable矩阵
+	}
 
-	ScanImageAndReduceIterator(m, table);
-	imshow("after", m);
-	
+	Mat c = imread("Resources/waitSR.jpg");
+	if (c.data == NULL) {
+		cout << "read failed" << endl;
+		exit(1);
+	}
+
+	Mat J;
+	LUT(c, lookUpTable, J);
+	imshow("before ", c);
 	waitKey(0);
-	cout << m << endl;
+	imshow("after ", J);
+	waitKey(0);
+	//! [table-init]
 }
+
+
+
