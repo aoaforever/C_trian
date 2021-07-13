@@ -213,7 +213,7 @@ Mat& ScanImageAndReduceRandomAccess(Mat& I, const uchar* const table) {
 /// </summary>
 
 void main() {
-	const int times = 100;
+	
 	int divideWith = 10; // convert our input string to number - C++ style
 	uchar table[256];
 	for (int i = 0; i < 256; ++i)
