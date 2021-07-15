@@ -347,12 +347,69 @@ using namespace cv;
 
 
 ////////////////////////////Mat step
-void main() {
-	Mat a(3, 9, CV_8UC3);
-	cout << a.step << endl;//cols*channels
-	cout << a.isContinuous() << endl;
+//void main() {
+//	Mat a(3, 9, CV_8UC3);
+//	cout << a.step << endl;//cols*channels
+//	cout << a.isContinuous() << endl;
+//
+//}
+////////////////////mat step
+
+
+
+
+///////////////////////convolution 
+bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData)
+{
+    // #if defined(_OPENMP)
+    // #pragma omp parallel for
+    // #endif
+    for (int row = 0; row < outputData.rows; row++)
+    {
+        for (int col = 0; col < outputData.cols; col++)
+        {
+            float* pOut = outputData.ptr(row, col);
+            const float* pIn = inputData.ptr(row, col);
+
+            for (int ch = 0; ch < outputData.channels; ch++)
+            {
+                const float* pF = filters.weights.ptr(0, ch);
+                pOut[ch] = dotProduct(pIn, pF, inputData.channels);
+                pOut[ch] += filters.biases.data[ch];
+            }
+        }
+    }
+    return true;
+}
+
+
+
+inline float dotProduct(const float* p1, const float* p2, int num)//num=input.channels=32;
+{
+    float sum = 0.f;
+
+__m256 a_float_x8, b_float_x8;
+__m256 sum_float_x8 = _mm256_setzero_ps();
+for (int i = 0; i < num; i += 8)
+{
+    a_float_x8 = _mm256_load_ps(p1 + i);
+    b_float_x8 = _mm256_load_ps(p2 + i);
+    sum_float_x8 = _mm256_add_ps(sum_float_x8, _mm256_mul_ps(a_float_x8, b_float_x8));
+}
+sum_float_x8 = _mm256_hadd_ps(sum_float_x8, sum_float_x8);
+sum_float_x8 = _mm256_hadd_ps(sum_float_x8, sum_float_x8);
+sum = ((float*)&sum_float_x8)[0] + ((float*)&sum_float_x8)[4];
 
 }
+
+void main() {
+
+}
+////////////////////////////////////convolution
+
+
+
+
 
 
 
