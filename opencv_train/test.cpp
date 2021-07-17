@@ -7,7 +7,7 @@ int main()
     a=3;
     b=6;
     for (int i =0;i<10;i++ ){
-        continue;
+        printf("%d",a);
     }
     return 0;
 }
