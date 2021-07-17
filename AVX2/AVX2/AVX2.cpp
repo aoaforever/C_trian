@@ -13,7 +13,7 @@
 using namespace std;
 
 
-float dotproduct() {
+inline float dotproduct(const float *p1,const float* p2,int num) {
 
 	float a[32], b[32];
 	for (int i = 0; i < 32; i++) {
@@ -77,6 +77,7 @@ class CDataBlob {
 public:
 	int rows;
 	int cols;
+	int channels;
 
 	void setzero();
 	T * ptr(int r, int c);
@@ -113,7 +114,22 @@ bool convolution4layerUnit(CDataBlob<float>& inputData,
 	return r1 && r2;
 }
 
+bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData) {
+	//直接遍历
+	for (int row = 0; row < outputData.rows; row++) {
+		for (int col = 0; col < outputData.cols; col++) {
+			float* pOut = outputData.ptr(row, col);
+			const float* pIn = inputData.ptr(row, col);
 
+			for (int ch = 0; ch < outputData.channels; ch++) {
+				const float* pF = filters.weights.ptr(0, ch);//输出图像某元素的第0个通道，则滤波器指向第0个元素，用其所有通道去和输入图像该元素的所有通道相乘，累加得到结果。
+				pOut[ch] = dotproduct(pIn, pF, inputData.channels);
+				pOut[ch] += filters.biases.data[ch];
+			}
+		}
+	}
+	return true;
+}
 bool convolution_3x3depthwise(CDataBlob<float>&inputData, Filters<float>&filters, CDataBlob<float>&outputData) {
 	//set all elements in outputData to zeros
 	outputData.setzero();
