@@ -6,6 +6,8 @@
 *.sln
 *.vcxproj
 *.vcxproj.filters
+*.vscode/
+*.exe
 
 # User-specific files
 *.rsuser
