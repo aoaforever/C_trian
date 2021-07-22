@@ -8,7 +8,7 @@
 *.vcxproj.filters
 *.vscode/
 *.exe
-
+*.jpg
 # User-specific files
 *.rsuser
 *.suo
