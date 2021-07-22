@@ -128,7 +128,41 @@ public:
 
 	}
 
+	bool convertDatatoCDataBlob(const unsigned char* imgData, int imgWidth, int imgHeight, int imgChannels, int imgWidthStep) {
+		if (imgData == NULL)
+		{
+			cerr << "The input image data is null." << endl;
+			return false;
+		}
+		if (typeid(float) != typeid(T))
+		{
+			cerr << "DataBlob must be float in the current version." << endl;
+			return false;
+		}
+		if (imgChannels != 3)
+		{
+			cerr << "The input image must be a 3-channel RGB image." << endl;
+			return false;
+		}
 
+		create(imgHeight, imgWidth, imgChannels);
+		setZero();
+
+#if defined(_OPENMP)
+#pragma omp parallel for
+#endif
+		for (int r = 0; r < this->rows; r++) {
+			for (int c = 0; c < this->cols; c++) {
+				T* pData = this->ptr(r, c);//指向输出图像的r行c列	
+
+				const unsigned char* pImgData = imgData + size_t(imgWidthStep)*r + imgChannels * c;
+				pData[0] = pImgData[0];
+				pData[1] = pImgData[1];
+				pData[2] = pImgData[2];
+			}
+		}
+		return true;
+	}
 
 };
 
