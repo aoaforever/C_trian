@@ -3,7 +3,7 @@
 #include<string.h>
 
 #define NUM_CONV_LAYER 1
-
+#define test 0
 extern ConvInfoStruct param_pConvInfo[NUM_CONV_LAYER];
 Filters<float> g_pFilters[NUM_CONV_LAYER];
 
@@ -19,9 +19,12 @@ void superResolution(unsigned char* rgbImageData, int width, int height, int ste
 {
 	CDataBlob<float> dataBlobs[2];
 
-	if (!param_initialized)
+	if (!param_initialized) {
+#if test
+		cout << "doing param_initialized" << endl;
+#endif
 		init_parameters();
-
+	}
 	//convert Mat to CDataBlob
 	dataBlobs[0].convertDatatoCDataBlob(rgbImageData, width, height, 3, step);
 
