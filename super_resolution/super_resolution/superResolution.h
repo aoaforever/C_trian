@@ -223,7 +223,7 @@ public:
 		this->biases.create(1, 1, num_filters);//有多少个滤波器就有多少个偏差
 
 		//开始拷贝卷积参数到filters中
-		for (int fidx = 0; fidx < this->weight.cols; fidx++) {
+		for (int fidx = 0; fidx < this->weights.cols; fidx++) {
 			memcpy(this->weights.ptr(0, fidx),
 				convinfo.pWeighhts + fidx * channels,
 				sizeof(T) * channels);
