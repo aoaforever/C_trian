@@ -238,3 +238,4 @@ public:
 };
 
 bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData, bool do_relu = true);
+void superResolution(unsigned char* rgbImageData, int width, int height, int step);
