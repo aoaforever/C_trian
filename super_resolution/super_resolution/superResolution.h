@@ -22,7 +22,7 @@
 //包含 一些 常用库
 #include <iostream>//cerr
 #include <string.h>//memcpy
-
+#include <typeinfo>//typeof
 using namespace std;
 
 void* myAlloc(size_t size);
@@ -156,12 +156,71 @@ public:
 				T* pData = this->ptr(r, c);//指向输出图像的r行c列	
 
 				const unsigned char* pImgData = imgData + size_t(imgWidthStep)*r + imgChannels * c;
-				pData[0] = pImgData[0];
-				pData[1] = pImgData[1];
-				pData[2] = pImgData[2];
+				pData[0] =(float) pImgData[0];
+				pData[1] =(float) pImgData[1];
+				pData[2] =(float) pImgData[2];
 			}
 		}
 		return true;
+	}
+
+
+	inline T getElement(int r, int c, int ch) {
+		if (this->data)
+		{
+			if (r >= 0 && r < this->rows &&
+				c >= 0 && c < this->cols &&
+				ch >= 0 && ch < this->channels)
+			{
+				T* p = this->ptr(r, c);
+				return p[ch];
+			}
+		}
+
+		return (T)(0);
+	}
+
+	friend ostream& operator<<(ostream& output, CDataBlob &dataBlob) {
+		output << "DataBlob Size (channels, rows, cols) = ("
+			<< dataBlob.channels << ", "
+			<< dataBlob.rows << ", "
+			<< dataBlob.cols << ", "
+			<< ")" << endl;
+
+		if (dataBlob.rows * dataBlob.cols * dataBlob.channels <= 64)
+		{
+			//print the elements only when the total number is less than 16
+			for (int ch = 0; ch < dataBlob.channels; ch++) {
+				output << "Channel " << ch << ": " << endl;
+
+				for (int r = 0; r < dataBlob.rows; r++)
+				{
+					output << "(";
+
+					for (int c = 0; c < dataBlob.cols; c++) {
+						T* p = dataBlob.ptr(r, c);
+
+						if (sizeof(T) < 4) {
+							output << (int)(p[ch]);
+						}
+						else {
+							output << p[ch];
+						}
+
+						if (c != dataBlob.cols - 1)
+							output << ", ";
+
+					}
+					output << ")" << endl;
+				}
+			}
+		}
+		else {
+			output << "(" << dataBlob.getElement(0, 0, 0) << ", ..., "
+				<< dataBlob.getElement(dataBlob.rows - 1, dataBlob.cols - 1, dataBlob.channels - 1)
+				<< endl;
+		}
+		return output;
 	}
 
 };
