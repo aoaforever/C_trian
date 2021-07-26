@@ -145,7 +145,7 @@ public:
 			return false;
 		}
 
-		create(imgHeight, imgWidth, imgChannels);
+		create(imgHeight, imgWidth, 32);
 		setZero();
 
 #if defined(_OPENMP)
@@ -155,10 +155,28 @@ public:
 			for (int c = 0; c < this->cols; c++) {
 				T* pData = this->ptr(r, c);//指向输出图像的r行c列	
 
-				const unsigned char* pImgData = imgData + size_t(imgWidthStep)*r + imgChannels * c;
-				pData[0] =(float) pImgData[0];
-				pData[1] =(float) pImgData[1];
-				pData[2] =(float) pImgData[2];
+				for (int fy = -1; fy <= 1; fy++) {
+					int srcy = r + fy;
+
+					if (srcy < 0 || srcy >= imgHeight)
+						continue;
+
+					for (int fx = -1; fx <= 1; fx++)
+					{
+						int srcx = c + fx;
+
+						if (srcx < 0 || srcx >= imgWidth)
+							continue;
+
+						const unsigned char* pImgData = imgData + srcy * size_t(imgWidthStep) + srcx*imgChannels;
+
+						int output_channel_offset = ((fy + 1) * 3 + fx + 1);//如果滤波器在图像之外，则之外的元素偏置为0.
+						pData[output_channel_offset] = pImgData[0];
+						pData[output_channel_offset+9] = pImgData[1];//一个3x3有9个元素
+						pData[output_channel_offset+18] = pImgData[2];
+					}
+				}
+				
 			}
 		}
 		return true;
