@@ -234,9 +234,14 @@ public:
 			}
 		}
 		else {
-			output << "(" << dataBlob.getElement(0, 0, 0) << ", ..., "
-				<< dataBlob.getElement(dataBlob.rows - 1, dataBlob.cols - 1, dataBlob.channels - 1)
-				<< endl;
+			for (int ch = 0; ch < dataBlob.channels; ch++) {
+				output << ch<<" channel= (\n" << dataBlob.getElement(0, 0, ch) << "\t" << dataBlob.getElement(0, 1, ch) << " ... " << dataBlob.getElement(0, dataBlob.cols - 1, ch) << endl
+					<< dataBlob.getElement(1, 0, ch) << "\t" << dataBlob.getElement(0, 1, ch) << " ... " << dataBlob.getElement(1, dataBlob.cols - 1, ch) << endl
+					<< " , ..., " << endl
+					<< dataBlob.getElement(dataBlob.rows - 1, 0, ch) << "\t" << dataBlob.getElement(dataBlob.rows - 1, 1, ch) << " ... " << dataBlob.getElement(dataBlob.rows - 1, dataBlob.cols - 1, ch) << endl
+
+					<< " )" << endl;
+			}
 		}
 		return output;
 	}
