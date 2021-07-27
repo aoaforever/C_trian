@@ -43,13 +43,16 @@ void superResolution(unsigned char* rgbImageData, int width, int height, int ste
 
 	//group convolution 3x3 
 #if test111
-	std::cout << g_pFilters[0].weights;
-	cout << dataBlobs[0].channels;
+	//std::cout << g_pFilters[0].weights;
+	cout << dataBlobs[0];
 #endif
 
 	convolution(dataBlobs[0], g_pFilters[0], dataBlobs[1], false);
 
-
+#if test111
+	//std::cout << g_pFilters[0].weights;
+	cout << dataBlobs[1];
+#endif
 
 #if test111
 	Mat result(dataBlobs[1].rows, dataBlobs[1].cols, CV_8UC3);
