@@ -43,6 +43,7 @@ typedef struct ConvInfoStruct_ {
 	int num_filters;//output_channels
 	bool is_depthwise;
 	bool is_pointwise;
+	bool is_3x3;
 	bool with_relu;
 	float* pWeighhts;
 	float* pBiases;
@@ -255,6 +256,7 @@ public:
 	int num_filters;//output_channels;
 	bool is_depthwise;//3x3
 	bool is_pointwise;//1x1
+	bool is_3x3;
 	bool with_relu;
 	CDataBlob<T> weights;
 	CDataBlob<T> biases;
@@ -264,6 +266,7 @@ public:
 		num_filters = 0;
 		is_depthwise = false;
 		is_pointwise = false;
+		is_3x3 = false;
 		with_relu = true;
 	}
 
@@ -288,29 +291,51 @@ public:
 		this->num_filters = convinfo.num_filters;
 		this->is_depthwise = convinfo.is_depthwise;
 		this->is_pointwise = convinfo.is_pointwise;
+		this->is_3x3 = convinfo.is_3x3;
 		this->with_relu = convinfo.with_relu;
 
-		if (!this->is_depthwise && this->is_pointwise) {
+		if (!this->is_depthwise && this->is_pointwise&&!this->is_3x3) {
 			this->weights.create(1, num_filters, channels);
+			this->weights.setZero();
 		}//1x1
 
-		else if (this->is_depthwise && !this->is_pointwise) {
+		else if (this->is_depthwise && !this->is_pointwise&&!this->is_3x3) {
 			this->weights.create(1, 9, channels);
+			this->weights.setZero();
 		}//3x3 group conv
+		else if (!this->is_depthwise && !this->is_pointwise && this->is_3x3)
+		{
+			this->weights.create(num_filters, 9, channels);
+			this->weights.setZero();
+		}
 		else {
 			cerr << "Unsupported filter type. Only 1x1 point-wise and 3x3 depth-wise are supported." << endl;
 			return *this;
 		}
 
 		this->biases.create(1, 1, num_filters);//有多少个滤波器就有多少个偏差
+		this->biases.setZero();
 
-		//开始拷贝卷积参数到filters中
-		for (int fidx = 0; fidx < this->weights.cols; fidx++) {
-			memcpy(this->weights.ptr(0, fidx),
-				convinfo.pWeighhts + fidx * channels,
-				sizeof(T) * channels);
-			
+		if (!this->is_3x3) {
+			//开始拷贝卷积参数到filters中
+			for (int fidx = 0; fidx < this->weights.cols; fidx++) {
+				memcpy(this->weights.ptr(0, fidx),
+					convinfo.pWeighhts + fidx * channels,
+					sizeof(T) * channels);
+
+			}
 		}
+		else if (this->is_3x3) {
+			for (int r = 0; r < this->weights.rows; r++) {
+				for (int c = 0; c < this->weights.cols; c++) {
+					int filter_dix_inByte = (r * this->weights.rows + c) * this->channels;
+					memcpy(this->weights.ptr(r, c),
+						convinfo.pWeighhts + filter_dix_inByte,
+						sizeof(T) * channels);
+				}
+			}
+		}
+		
 		memcpy(this->biases.ptr(0, 0),
 			convinfo.pBiases,
 			sizeof(T) * this->num_filters);
