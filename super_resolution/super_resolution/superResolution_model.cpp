@@ -2,8 +2,8 @@
 #include<stdio.h>
 #include<string.h>
 
-#define NUM_CONV_LAYER 1
-#define test111 1
+#define NUM_CONV_LAYER 2
+#define test111 0
 
 
 
@@ -30,7 +30,7 @@ void init_parameters() {
 
 void superResolution(unsigned char* rgbImageData, int width, int height, int step)
 {
-	CDataBlob<float> dataBlobs[2];
+	CDataBlob<float> dataBlobs[NUM_CONV_LAYER+1];
 
 	if (!param_initialized) {
 #if test111
@@ -48,7 +48,7 @@ void superResolution(unsigned char* rgbImageData, int width, int height, int ste
 #endif
 
 	convolution(dataBlobs[0], g_pFilters[0], dataBlobs[1], false);
-
+	convolution(dataBlobs[1], g_pFilters[1], dataBlobs[2], false);
 #if test111
 	//std::cout << g_pFilters[0].weights;
 	cout << dataBlobs[1];
@@ -74,7 +74,7 @@ void superResolution(unsigned char* rgbImageData, int width, int height, int ste
 		}
 	}
 
-	imshow("aaa", result);
-	waitKey(0);
+	//imshow("aaa", result);
+	//waitKey(0);
 #endif
 }
