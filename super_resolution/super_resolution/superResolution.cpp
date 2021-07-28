@@ -184,7 +184,49 @@ bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filte
     }
     return true;
 }
+bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData) {
+    //set all elements in outputData to zeros
+    outputData.setZero();
 
+    //multi thread??
+    //....
+    //
+    for (int row = 0; row < outputData.rows; row++) {
+        int srcy_start = row - 1;
+        int srcy_end = srcy_start + 3;/////////////////Ë³Ðò²»ÄÜÂÒ£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡
+        srcy_start = MAX(0, srcy_start);
+        srcy_end = MIN(srcy_end, inputData.rows );
+
+        for (int col = 0; col < outputData.cols; col++) {
+            int srcx_start = col - 1;
+            int srcx_end = srcx_start + 3;///////////////Ë³Ðò²»ÄÜÂÒ£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡
+            srcx_start = MAX(0, srcx_start);
+            srcx_end = MIN(srcx_end, inputData.cols);
+
+            float* pData = outputData.ptr(row, col);
+
+            for (int ch = 0; ch < filters.num_filters; ch++) {
+                for (int r = srcy_start; r < srcy_end; r++) {
+                    for (int c = srcx_start; c < srcx_end; c++) {
+                        float* pInput = inputData.ptr(r, c);
+                        int f_r = r - row + 1;
+                        int f_c = c - col + 1;
+                        int filter_idx = 3 * f_r + f_c;
+                        float* pFilter = filters.weights.ptr(ch, filter_idx);
+                        //printf("row=%d, col=%d, ch=%d, r=%d, c=%d, filter_idx=%d, inchannels=%d \n", row, col,ch, r, c, filter_idx,inputData.channels );
+                        pData[ch] += dotProduct(pInput, pFilter, inputData.channels);
+                        //pData[ch] += 1;
+                    }
+                }
+                pData[ch] += filters.biases.data[ch];
+            }
+        }
+    }
+    
+    return true;
+
+
+}
 bool convolution_3x3depthwise(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData)
 {
     //set all elements in outputData to zeros
@@ -214,6 +256,7 @@ bool convolution_3x3depthwise(CDataBlob<float>& inputData, Filters<float>& filte
                     int filter_r = r - row + 1;
                     int filter_c = c - col + 1;
                     int filter_idx = filter_r * 3 + filter_c;
+                    
                     vecMulAdd(inputData.ptr(r, c), filters.weights.ptr(0, filter_idx), pOut, filters.num_filters);
                 }
             vecAdd(filters.biases.ptr(0, 0), pOut, filters.num_filters);
@@ -268,16 +311,18 @@ bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob
     }
     if (inputData.channels != filters.channels)
     {
-        cerr << __FUNCTION__ << ": The input data dimension cannot meet filters." << endl;
+        cerr << __FUNCTION__ << ": The input data dimension cannot meet filters." << "inputData.channels ="<< inputData.channels<<  "filters.channels ="<<filters.channels << endl;
         return false;
     }
 
     outputData.create(inputData.rows, inputData.cols, filters.num_filters);
 
-    if (filters.is_pointwise && !filters.is_depthwise)
+    if (filters.is_pointwise && !filters.is_depthwise )
         convolution_1x1pointwise(inputData, filters, outputData);
-    else if (!filters.is_pointwise && filters.is_depthwise)
+    else if (!filters.is_pointwise && filters.is_depthwise )
         convolution_3x3depthwise(inputData, filters, outputData);
+    else if (filters.is_3x3 )
+        convolution_3x3default(inputData, filters, outputData);
     else
     {
         cerr << __FUNCTION__ << ": Unsupported filter type." << endl;
