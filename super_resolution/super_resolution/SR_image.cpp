@@ -28,8 +28,8 @@ int main() {
 #endif
 
 
-	imshow("asd", image);
-	waitKey(0);
+	//imshow("asd", image);
+	//waitKey(0);
 	superResolution(image.ptr(0), image.cols, image.rows, (int)image.step);
 	cout << "success" << endl<<image.channels();
 	waitKey(0);
