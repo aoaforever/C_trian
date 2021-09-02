@@ -20,9 +20,9 @@ float f2_weight[3 * 8 * 3 * 3] = {
 						  1,2,3,4,5,6,7,8,9,   1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9 };
 float f2_bias[3] = { 0,0,0 };
 
-//[channels,num_filters,is_depthwise,is_pointwise,with_relu,pWeight,pBiases]
+//[channels,num_filters,is_depthwise,is_pointwise,is_3x3,with_relu,pWeight,pBiases]
 ConvInfoStruct param_pConvInfo[2] = {
-	{32,8,false,true,false,false,f1_weight,f1_bias},
-	{8,3,false,false,true,false,f2_weight,f2_bias}
+	{32,8,false,true,false,true,f1_weight,f1_bias},
+	{8,3,false,false,true,true,f2_weight,f2_bias}
 };
 
