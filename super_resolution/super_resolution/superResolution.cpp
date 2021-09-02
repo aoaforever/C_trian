@@ -358,3 +358,39 @@ bool averagePooling(CDataBlob<float>& inputData, CDataBlob<float>& outputData) {
         }
     }
 }
+
+bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int up_scale) {
+    int input_channels = inputData.channels;
+    if (input_channels % (up_scale *up_scale) != 0) {
+        cerr << "The input channels must be divide by up_scale**2 totally. " << endl;
+        return false;
+    }
+    int output_channels = input_channels / (up_scale * up_scale);
+    outputData.create(inputData.rows * 2, inputData.cols * 2, output_channels);
+    
+    for (int row = 0; row < inputData.rows; row++) {
+        for (int col = 0; col < inputData.cols; col++) {
+            const float* pIn = inputData.ptr(row, col);
+            int pointr_start = row * up_scale;
+            int pointr_end = pointr_start + up_scale;
+
+            int pointc_start = col * up_scale;
+            int pointc_end = pointc_start + up_scale;
+
+            int ch = 0;
+            for (int r = pointr_start; r < pointr_end; r++) {
+                for (int c = pointc_start; c < pointc_end; c++) {
+                    //cout << "r= " << r << endl << "c= " << c << endl;
+                    float* pOut = outputData.ptr(r, c);
+                    for (int outchannel = 0; outchannel < output_channels; outchannel++) {
+                        pOut[outchannel] = pIn[outchannel*up_scale*up_scale+(ch++)];
+                    }
+
+                }
+            }
+
+        }
+    }
+    cout << "done" << endl;
+    return true;
+}
