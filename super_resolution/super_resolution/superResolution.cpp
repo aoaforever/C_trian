@@ -185,6 +185,7 @@ bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filte
     return true;
 }
 bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData) {
+    cout << "convolution_3x3default" << endl;
     //set all elements in outputData to zeros
     outputData.setZero();
 
@@ -333,4 +334,27 @@ bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob
         return relu(outputData);
 
     return true;
+}
+bool averagePooling(CDataBlob<float>& inputData, CDataBlob<float>& outputData) {
+    if (inputData.isEmpty())
+    {
+        cerr << "__FUNCTION__" << ": The input data is empty." << endl;
+        return false;
+    }
+
+    if (inputData.channels % 8 != 0) {
+        cerr << "The input channels can't be divide by 8 totally. " << endl;
+        return false;
+    }
+    outputData.create(1, 1, inputData.channels);
+    outputData.setZero();
+    float* pOut = outputData.ptr(0, 0);
+
+    for (int r = 0; r < inputData.rows; r++) {
+        for (int c = 0; c < inputData.cols; c++) {
+            float* pIn = inputData.ptr(r, c);
+            vecAdd(pIn, pOut, inputData.channels);
+
+        }
+    }
 }
