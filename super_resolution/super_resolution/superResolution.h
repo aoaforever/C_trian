@@ -172,9 +172,9 @@ public:
 						const unsigned char* pImgData = imgData + srcy * size_t(imgWidthStep) + srcx*imgChannels;
 
 						int output_channel_offset = ((fy + 1) * 3 + fx + 1);//如果滤波器在图像之外，则之外的元素偏置为0.
-						pData[output_channel_offset] = pImgData[0];
-						pData[output_channel_offset+9] = pImgData[1];//一个3x3有9个元素
-						pData[output_channel_offset+18] = pImgData[2];
+						pData[output_channel_offset] = pImgData[2]/255.0;
+						pData[output_channel_offset+9] = pImgData[1]/255.0;//一个3x3有9个元素
+						pData[output_channel_offset+18] = pImgData[0]/255.0;
 					}
 				}
 				
@@ -315,7 +315,7 @@ public:
 
 		this->biases.create(1, 1, num_filters);//有多少个滤波器就有多少个偏差
 		this->biases.setZero();
-		cout << "this->is_3x3 " << this->is_3x3 << endl;
+		
 		if (!this->is_3x3) {
 			//开始拷贝卷积参数到filters中
 			for (int fidx = 0; fidx < this->weights.cols; fidx++) {
@@ -349,3 +349,4 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
 void superResolution(unsigned char* rgbImageData, int width, int height, int step);
 bool convolutionforsimpleblocks(CDataBlob<float>& inputData, Filters<float>& filters1, Filters<float>& filters2, Filters<float>& filters3, Filters<float>& filters4,
 	CDataBlob<float>& outputData, bool do_relu = true);
+bool PixelAdd(CDataBlob<float>& inputData, CDataBlob<float>& outputData);
