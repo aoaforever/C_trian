@@ -315,7 +315,7 @@ public:
 
 		this->biases.create(1, 1, num_filters);//有多少个滤波器就有多少个偏差
 		this->biases.setZero();
-
+		cout << "this->is_3x3 " << this->is_3x3 << endl;
 		if (!this->is_3x3) {
 			//开始拷贝卷积参数到filters中
 			for (int fidx = 0; fidx < this->weights.cols; fidx++) {
@@ -328,7 +328,7 @@ public:
 		else if (this->is_3x3) {
 			for (int r = 0; r < this->weights.rows; r++) {
 				for (int c = 0; c < this->weights.cols; c++) {
-					int filter_dix_inByte = (r * this->weights.rows + c) * this->channels;
+					int filter_dix_inByte = (r * this->weights.cols + c) * this->channels;
 					memcpy(this->weights.ptr(r, c),
 						convinfo.pWeighhts + filter_dix_inByte,
 						sizeof(T) * channels);
@@ -347,3 +347,5 @@ public:
 bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData, bool do_relu = true);
 bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int up_scale);
 void superResolution(unsigned char* rgbImageData, int width, int height, int step);
+bool convolutionforsimpleblocks(CDataBlob<float>& inputData, Filters<float>& filters1, Filters<float>& filters2, Filters<float>& filters3, Filters<float>& filters4,
+	CDataBlob<float>& outputData, bool do_relu = true);
