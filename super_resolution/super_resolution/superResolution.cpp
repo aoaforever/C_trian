@@ -5,7 +5,7 @@
 #include <vector>
 #include <float.h> //for FLT_EPSION
 #include <algorithm>//for stable_sort, sort
-
+using namespace std;
 void* myAlloc(size_t size) {
 	char* ptr, * ptr0;
 	ptr0 = (char*)malloc(
@@ -378,6 +378,7 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
     }
     int output_channels = input_channels / (up_scale * up_scale);
     outputData.create(inputData.rows * 2, inputData.cols * 2, output_channels);
+    outputData.setZero();
     
     for (int row = 0; row < inputData.rows; row++) {
         for (int col = 0; col < inputData.cols; col++) {
@@ -394,6 +395,9 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
                     //cout << "r= " << r << endl << "c= " << c << endl;
                     float* pOut = outputData.ptr(r, c);
                     for (int outchannel = 0; outchannel < output_channels; outchannel++) {
+                        if (c > 1200) {
+                            std::cout << pIn[outchannel * up_scale * up_scale + (ch) ]<<"\n";
+                        }
                         pOut[outchannel] = pIn[outchannel*up_scale*up_scale+(ch)];
                     }
                     ch = ch + 1;
@@ -411,10 +415,33 @@ bool convolutionforsimpleblocks(CDataBlob<float>& inputData,
     CDataBlob<float>& outputData, bool do_relu) {
 
     CDataBlob<float> tmp1,tmp2,tmp3;
+ 
     bool r1 = convolution(inputData, filters1, tmp1, do_relu);
-    cout << "r1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n" << tmp1 << "\n\n\n\n\n\n\n\n\n\n";
+    //cout << "r1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n" << tmp1 << "\n\n\n\n\n\n\n\n\n\n";
     bool r2 = convolution(tmp1, filters2, tmp2, do_relu);
     bool r3 = convolution(tmp2, filters3, tmp3, do_relu);
     bool r4 = convolution(tmp3, filters4, outputData, do_relu);
     return r1 && r2 && r3 && r4;
+}
+
+bool PixelAdd(CDataBlob<float>& inputData,  CDataBlob<float>& outputData) {
+    cout << "PixelAdd doing\n";
+    for (int r = 0; r < outputData.rows; r++) {
+        for (int c = 0; c < outputData.cols; c++) {
+            //cout << r << c << endl;
+            float* pIn = inputData.ptr(r, c);
+            float* pOut = outputData.ptr(r, c);
+
+            for (int ch = 0; ch < outputData.channels; ch += 8) {
+                __m256 in, out;
+                //cout << ch << endl;
+                in = _mm256_load_ps(pIn + ch);
+                out = _mm256_load_ps(pOut + ch);
+                out = _mm256_add_ps(in, out);
+                _mm256_store_ps(pOut + ch, out);
+            }
+        }
+    }
+    cout << "PixelAdd done\n";
+    return true;
 }
