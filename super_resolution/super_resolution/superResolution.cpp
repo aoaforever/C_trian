@@ -167,6 +167,7 @@ bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filte
 // #if defined(_OPENMP)
 // #pragma omp parallel for
 // #endif
+    cout << "1x1 conv\n";
     for (int row = 0; row < outputData.rows; row++)
     {
         for (int col = 0; col < outputData.cols; col++)
@@ -182,10 +183,11 @@ bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filte
             }
         }
     }
+    cout << "1x1 conv done\n";
     return true;
 }
 bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData) {
-    cout << "convolution_3x3default" << endl;
+    cout << "default conv\n";
     //set all elements in outputData to zeros
     outputData.setZero();
 
@@ -223,7 +225,7 @@ bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters
             }
         }
     }
-    
+    cout << "default conv done\n";
     return true;
 
 
@@ -275,7 +277,8 @@ bool relu(CDataBlob<float>& inputoutputData)
     }
 
     int len = inputoutputData.cols * inputoutputData.rows * inputoutputData.channelStep / sizeof(float);
-
+    bool leakyrelu = true;
+    float val = 0.1;
 
 #if defined(_ENABLE_AVX512)
     __m512 a, bzeros;
@@ -287,12 +290,20 @@ bool relu(CDataBlob<float>& inputoutputData)
         _mm512_store_ps(inputoutputData.data + i, a);
     }
 #elif defined(_ENABLE_AVX2)
-    __m256 a, bzeros;
+    __m256 a, bzeros,c,relu_val;
+    relu_val = _mm256_set_ps(val, val, val, val, val, val, val, val);
     bzeros = _mm256_setzero_ps(); //zeros
     for (int i = 0; i < len; i += 8)
     {
         a = _mm256_load_ps(inputoutputData.data + i);
         a = _mm256_max_ps(a, bzeros);
+        if (leakyrelu) {
+            c = _mm256_load_ps(inputoutputData.data + i);
+            c = _mm256_min_ps(c, bzeros);
+            c = _mm256_mul_ps(c, relu_val);
+            a = _mm256_add_ps(a, c);
+        }
+
         _mm256_store_ps(inputoutputData.data + i, a);
     }
 #else    
@@ -383,14 +394,27 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
                     //cout << "r= " << r << endl << "c= " << c << endl;
                     float* pOut = outputData.ptr(r, c);
                     for (int outchannel = 0; outchannel < output_channels; outchannel++) {
-                        pOut[outchannel] = pIn[outchannel*up_scale*up_scale+(ch++)];
+                        pOut[outchannel] = pIn[outchannel*up_scale*up_scale+(ch)];
                     }
-
+                    ch = ch + 1;
                 }
             }
 
         }
     }
-    cout << "done" << endl;
+    cout << "PixelShuffle done" << endl;
     return true;
+}
+
+bool convolutionforsimpleblocks(CDataBlob<float>& inputData, 
+    Filters<float>& filters1, Filters<float>& filters2, Filters<float>& filters3, Filters<float>& filters4,
+    CDataBlob<float>& outputData, bool do_relu) {
+
+    CDataBlob<float> tmp1,tmp2,tmp3;
+    bool r1 = convolution(inputData, filters1, tmp1, do_relu);
+    cout << "r1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n" << tmp1 << "\n\n\n\n\n\n\n\n\n\n";
+    bool r2 = convolution(tmp1, filters2, tmp2, do_relu);
+    bool r3 = convolution(tmp2, filters3, tmp3, do_relu);
+    bool r4 = convolution(tmp3, filters4, outputData, do_relu);
+    return r1 && r2 && r3 && r4;
 }
