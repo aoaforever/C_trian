@@ -5,8 +5,12 @@
 #include <vector>
 #include <float.h> //for FLT_EPSION
 #include <algorithm>//for stable_sort, sort
+#include <omp.h>
+#define OPENMP_ONOFF  1
+
 using namespace std;
 void* myAlloc(size_t size) {
+    
 	char* ptr, * ptr0;
 	ptr0 = (char*)malloc(
 		(size_t)(size + _MALLOC_ALIGN * ((size >= 4096) + 1L) + sizeof(char*))
@@ -164,10 +168,12 @@ inline bool vecAdd(const float* p1, float* p2, int num)
 
 bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData)
 {//{32, 16, false, true, true, f0_weight, f0_bias},[16* 32 * 1 * 1]个数据
-// #if defined(_OPENMP)
-// #pragma omp parallel for
-// #endif
-    cout << "1x1 conv\n";
+
+
+    //cout << "1x1 conv\n";
+ #if OPENMP_ONOFF
+ #pragma omp parallel for num_threads(6)
+ #endif
     for (int row = 0; row < outputData.rows; row++)
     {
         for (int col = 0; col < outputData.cols; col++)
@@ -183,17 +189,21 @@ bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filte
             }
         }
     }
-    cout << "1x1 conv done\n";
+    //cout << "1x1 conv done\n";
     return true;
 }
 bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData) {
-    //cout << "default conv\n";
+    ////cout << "default conv\n";
     //set all elements in outputData to zeros
     outputData.setZero();
 
     //multi thread??
     //....
     //
+
+#if OPENMP_ONOFF
+#pragma omp parallel for num_threads(6)
+#endif 
     for (int row = 0; row < outputData.rows; row++) {
         int srcy_start = row - 1;
         int srcy_end = srcy_start + 3;/////////////////顺序不能乱！！！！！！！！！！！！！！！！！！！！！！！！
@@ -225,7 +235,7 @@ bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters
             }
         }
     }
-    //cout << "default conv done\n";
+    ////cout << "default conv done\n";
     return true;
 
 
@@ -234,9 +244,9 @@ bool convolution_3x3depthwise(CDataBlob<float>& inputData, Filters<float>& filte
 {
     //set all elements in outputData to zeros
     outputData.setZero();
-    // #if defined(_OPENMP)
-    // #pragma omp parallel for
-    // #endif
+#if OPENMP_ONOFF
+#pragma omp parallel for num_threads(6)
+#endif
     for (int row = 0; row < outputData.rows; row++)
     {
         int srcy_start = row - 1;
@@ -380,6 +390,9 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
     outputData.create(inputData.rows * 2, inputData.cols * 2, output_channels);
     outputData.setZero();
     
+#if OPENMP_ONOFF
+#pragma omp parallel for num_threads(6)
+#endif
     for (int row = 0; row < inputData.rows; row++) {
         for (int col = 0; col < inputData.cols; col++) {
             const float* pIn = inputData.ptr(row, col);
@@ -392,11 +405,11 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
             int ch = 0;
             for (int r = pointr_start; r < pointr_end; r++) {
                 for (int c = pointc_start; c < pointc_end; c++) {
-                    //cout << "r= " << r << endl << "c= " << c << endl;
+                    ////cout << "r= " << r << endl << "c= " << c << endl;
                     float* pOut = outputData.ptr(r, c);
                     for (int outchannel = 0; outchannel < output_channels; outchannel++) {
                         ////if (c > 1200) {
-                        //    std::cout << pIn[outchannel * up_scale * up_scale + (ch) ]<<"\n";
+                        //    std:://cout << pIn[outchannel * up_scale * up_scale + (ch) ]<<"\n";
                         //}
                         pOut[outchannel] = pIn[outchannel*up_scale*up_scale+(ch)];
                     }
@@ -406,7 +419,7 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
 
         }
     }
-    cout << "PixelShuffle done" << endl;
+    //cout << "PixelShuffle done" << endl;
     return true;
 }
 
@@ -417,7 +430,7 @@ bool convolutionforsimpleblocks(CDataBlob<float>& inputData,
     CDataBlob<float> tmp1,tmp2,tmp3;
  
     bool r1 = convolution(inputData, filters1, tmp1, do_relu);
-    //cout << "r1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\nsimple_blocks 的第一个conv\n" << tmp1 << "\n\n\n\n\n\n\n\n\n\n";
+    ////cout << "r1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\nsimple_blocks 的第一个conv\n" << tmp1 << "\n\n\n\n\n\n\n\n\n\n";
     bool r2 = convolution(tmp1, filters2, tmp2, do_relu);
     bool r3 = convolution(tmp2, filters3, tmp3, do_relu);
     bool r4 = convolution(tmp3, filters4, outputData, do_relu);
@@ -425,16 +438,17 @@ bool convolutionforsimpleblocks(CDataBlob<float>& inputData,
 }
 
 bool PixelAdd(CDataBlob<float>& inputData,  CDataBlob<float>& outputData) {
-    cout << "PixelAdd doing\n";
+    //cout << "PixelAdd doing\n";
+
     for (int r = 0; r < outputData.rows; r++) {
         for (int c = 0; c < outputData.cols; c++) {
-            //cout << r << c << endl;
+            ////cout << r << c << endl;
             float* pIn = inputData.ptr(r, c);
             float* pOut = outputData.ptr(r, c);
 
             for (int ch = 0; ch < outputData.channels; ch += 8) {
                 __m256 in, out;
-                //cout << ch << endl;
+                ////cout << ch << endl;
                 in = _mm256_load_ps(pIn + ch);
                 out = _mm256_load_ps(pOut + ch);
                 out = _mm256_add_ps(in, out);
@@ -442,6 +456,6 @@ bool PixelAdd(CDataBlob<float>& inputData,  CDataBlob<float>& outputData) {
             }
         }
     }
-    cout << "PixelAdd done\n";
+    //cout << "PixelAdd done\n";
     return true;
 }
