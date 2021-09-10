@@ -74,6 +74,7 @@ public:
 	}
 
 	~CDataBlob() {
+		
 		setNULL();
 	}
 
@@ -346,7 +347,7 @@ public:
 
 bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData, bool do_relu = true);
 bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int up_scale);
-void superResolution(unsigned char* rgbImageData, int width, int height, int step);
+float superResolution(unsigned char* rgbImageData, int width, int height, int step);
 bool convolutionforsimpleblocks(CDataBlob<float>& inputData, Filters<float>& filters1, Filters<float>& filters2, Filters<float>& filters3, Filters<float>& filters4,
 	CDataBlob<float>& outputData, bool do_relu = true);
 bool PixelAdd(CDataBlob<float>& inputData, CDataBlob<float>& outputData);
