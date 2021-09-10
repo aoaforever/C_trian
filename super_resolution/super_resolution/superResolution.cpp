@@ -6,7 +6,11 @@
 #include <float.h> //for FLT_EPSION
 #include <algorithm>//for stable_sort, sort
 #include <omp.h>
+#include <opencv.hpp>
 #define OPENMP_ONOFF  1
+#define threads 12
+
+
 
 using namespace std;
 void* myAlloc(size_t size) {
@@ -172,7 +176,7 @@ bool convolution_1x1pointwise(CDataBlob<float>& inputData, Filters<float>& filte
 
     //cout << "1x1 conv\n";
  #if OPENMP_ONOFF
- #pragma omp parallel for num_threads(6)
+ #pragma omp parallel for num_threads(threads)
  #endif
     for (int row = 0; row < outputData.rows; row++)
     {
@@ -202,7 +206,7 @@ bool convolution_3x3default(CDataBlob<float>& inputData, Filters<float>& filters
     //
 
 #if OPENMP_ONOFF
-#pragma omp parallel for num_threads(6)
+#pragma omp parallel for num_threads(threads)
 #endif 
     for (int row = 0; row < outputData.rows; row++) {
         int srcy_start = row - 1;
@@ -245,7 +249,7 @@ bool convolution_3x3depthwise(CDataBlob<float>& inputData, Filters<float>& filte
     //set all elements in outputData to zeros
     outputData.setZero();
 #if OPENMP_ONOFF
-#pragma omp parallel for num_threads(6)
+#pragma omp parallel for num_threads(threads)
 #endif
     for (int row = 0; row < outputData.rows; row++)
     {
@@ -391,7 +395,7 @@ bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int
     outputData.setZero();
     
 #if OPENMP_ONOFF
-#pragma omp parallel for num_threads(6)
+#pragma omp parallel for num_threads(threads)
 #endif
     for (int row = 0; row < inputData.rows; row++) {
         for (int col = 0; col < inputData.cols; col++) {
@@ -439,7 +443,7 @@ bool convolutionforsimpleblocks(CDataBlob<float>& inputData,
 
 bool PixelAdd(CDataBlob<float>& inputData,  CDataBlob<float>& outputData) {
     //cout << "PixelAdd doing\n";
-
+    
     for (int r = 0; r < outputData.rows; r++) {
         for (int c = 0; c < outputData.cols; c++) {
             ////cout << r << c << endl;
@@ -456,6 +460,7 @@ bool PixelAdd(CDataBlob<float>& inputData,  CDataBlob<float>& outputData) {
             }
         }
     }
+    
     //cout << "PixelAdd done\n";
     return true;
 }
