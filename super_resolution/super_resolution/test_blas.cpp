@@ -33,7 +33,7 @@ void main() {
 	int k = 32*9;
 	TIME_START
 	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasConjNoTrans, r, c, k, 1, kernel.weights.data, 32*9, input.data, 512*512, 0, C.data, 512*512);
-	TIME_END("SAS")
+	TIME_END("openBlas")
 
 	CDataBlob<float> input1, output;
 	input1.create(512, 512, 32);
