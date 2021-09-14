@@ -18,7 +18,29 @@ cv::TickMeter cvtm;
 #define TIME_END(FUNCNAME)
 #endif
 
+void convertA(float* A_convert, const int rowC, const int colC, const int convAw, const int pad_w, float* A_pad) {
+	//传入C的行列，展开后A'的宽，padding后A的宽。
+	for (int r = 0; r < rowC; r++) {
+		for (int c = 0; c < colC; c++) {
+			int wh = r * colC * convAw + c * convAw;
 
+			int col1 = r * pad_w + c;
+			A_convert[wh] = A_pad[col1];
+			A_convert[wh+1] = A_pad[col1+1];
+			A_convert[wh+2] = A_pad[col1+2];
+
+			int col2 = (r + 1) * pad_w + c;
+			A_convert[wh + 3] = A_pad[col2];
+			A_convert[wh + 4] = A_pad[col2+1];
+			A_convert[wh + 5] = A_pad[col2+2];
+
+			int col3 = (r + 2) * pad_w + c;
+			A_convert[wh + 6] = A_pad[col3];
+			A_convert[wh + 7] = A_pad[col3+1];
+			A_convert[wh + 8] = A_pad[col3+2];
+		}
+	}
+}
 void padding(const int pad_w, const int pad_h, const int colA, float* A_pad, const float* A) {
 	for (int r = 0; r < pad_h; r++) {
 		for (int c = 0; c < pad_w; c++) {
@@ -37,6 +59,66 @@ void padding(const int pad_w, const int pad_h, const int colA, float* A_pad, con
 			}
 		}
 	}
+}
+
+void padding_test() {
+	//卷积参数初始化
+	const int pad = 1;
+	const int stride = 1;
+
+	//定义A
+	const int rowA = 5;
+	const int colA = 5;
+	const float A[rowA * colA] = {
+		1,2,3,4,5,
+		2,3,4,5,6,
+		3,4,5,6,7,
+		5,6,7,8,9,
+		1,3,4,5,6
+	};
+
+	//定义卷积核
+	const int rowK = 3;
+	const int colK = rowK;
+	float B[rowK * colK]{
+		1,2,3,
+		3,4,5,
+		2,3,4
+	};
+
+	//计算C的宽高
+	const int rowC = (rowA - rowK + 2 * pad) / stride + 1;
+	const int colC = (colA - colK + 2 * pad) / stride + 1;
+	//cout << rowC << endl << colC;
+	//计算pad_A
+	const int pad_w = rowA + 2 * pad;
+	const int pad_h = colA + 2 * pad;
+	float A_pad[pad_w * pad_h];
+	padding(pad_w, pad_h, colA, A_pad, A);
+
+
+
+	//for (int r = 0; r < pad_h; r++) {
+	//	for (int c = 0; c < pad_w; c++) {
+	//		cout << A_pad[r * pad_w + c] <<", ";
+	//	}
+	//	cout << endl;
+	//}
+
+	//定义A'的宽高
+	const int convAw = rowK * rowK;
+	const int convAh = rowC *colC ;
+
+	float A_convert[convAh * convAw];
+	convertA(A_convert, rowC, colC, convAw, pad_w, A_pad);
+
+	for (int r = 0; r < convAh; r++) {
+		for (int c = 0; c < convAw; c++) {
+			cout << A_convert[r * convAw + c] << ", ";
+		}
+		cout << endl;
+	}
+
 }
 void cblascolmajor() {
 	const int rowK = 3;
@@ -215,7 +297,8 @@ void img2col() {
 
 
 void main() {
-	img2col();
+	padding_test();
+	//img2col();
 	//CDataBlob<float> input,C;
 
 	//ConvInfoStruct kernel1{ 32,32,false,false,true,false };
