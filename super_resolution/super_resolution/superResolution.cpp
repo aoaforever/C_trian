@@ -431,19 +431,22 @@ bool convolutionforsimpleblocks(CDataBlob<float>& inputData,
     Filters<float>& filters1, Filters<float>& filters2, Filters<float>& filters3, Filters<float>& filters4,
     CDataBlob<float>& outputData, bool do_relu) {
 
-    CDataBlob<float> tmp1,tmp2,tmp3;
+    CDataBlob<float> tmp1,tmp2;
  
     bool r1 = convolution(inputData, filters1, tmp1, do_relu);
     ////cout << "r1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\nsimple_blocks 的第一个conv\n" << tmp1 << "\n\n\n\n\n\n\n\n\n\n";
     bool r2 = convolution(tmp1, filters2, tmp2, do_relu);
-    bool r3 = convolution(tmp2, filters3, tmp3, do_relu);
-    bool r4 = convolution(tmp3, filters4, outputData, do_relu);
+    bool r3 = convolution(tmp2, filters3, tmp1, do_relu);
+    bool r4 = convolution(tmp1, filters4, outputData, do_relu);
     return r1 && r2 && r3 && r4;
 }
 
 bool PixelAdd(CDataBlob<float>& inputData,  CDataBlob<float>& outputData) {
     //cout << "PixelAdd doing\n";
-    
+
+#if OPENMP_ONOFF
+#pragma omp parallel for num_threads(threads)
+#endif
     for (int r = 0; r < outputData.rows; r++) {
         for (int c = 0; c < outputData.cols; c++) {
             ////cout << r << c << endl;
