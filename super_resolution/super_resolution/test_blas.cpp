@@ -17,7 +17,14 @@ cv::TickMeter cvtm;
 #define TIME_START
 #define TIME_END(FUNCNAME)
 #endif
-
+void show(const int row, const int col, const float* mat) {
+	for (int r = 0; r < row; r++) {
+		for (int c = 0; c < col; c++) {
+			cout << mat[r * col + c] << ", ";
+		}
+		cout << endl;
+	}
+}
 void convertA(float* A_convert, const int rowC, const int colC, const int convAw, const int pad_w, float* A_pad) {
 	//传入C的行列，展开后A'的宽，padding后A的宽。
 	for (int r = 0; r < rowC; r++) {
@@ -61,6 +68,24 @@ void padding(const int pad_w, const int pad_h, const int colA, float* A_pad, con
 	}
 }
 
+void Matrixmul_blas(const int convAh, const int convAw, float* A_convert, float* B, float* C) {
+	const enum CBLAS_ORDER order = CblasRowMajor;
+	const enum CBLAS_TRANSPOSE TransA = CblasNoTrans;
+	const enum CBLAS_TRANSPOSE TransB = CblasNoTrans;
+	const int M = convAh;//A的行数，C的行数
+	const int N = 1;//B的列数，C的列数
+	const int K = convAw;//A的列数，B的行数
+	const float alpha = 1;
+	const float beta = 0;
+	const int lda = K;
+	const int ldb = N;
+	const int ldc = N;
+
+	cblas_sgemm(order, TransA, TransB, M, N, K, alpha, A_convert, lda, B, ldb, beta, C, ldc);
+
+
+
+}
 void padding_test() {
 	//卷积参数初始化
 	const int pad = 1;
@@ -97,13 +122,8 @@ void padding_test() {
 	padding(pad_w, pad_h, colA, A_pad, A);
 
 
+	show(pad_h, pad_w, A_pad);
 
-	//for (int r = 0; r < pad_h; r++) {
-	//	for (int c = 0; c < pad_w; c++) {
-	//		cout << A_pad[r * pad_w + c] <<", ";
-	//	}
-	//	cout << endl;
-	//}
 
 	//定义A'的宽高
 	const int convAw = rowK * rowK;
@@ -111,13 +131,16 @@ void padding_test() {
 
 	float A_convert[convAh * convAw];
 	convertA(A_convert, rowC, colC, convAw, pad_w, A_pad);
+	show(convAh, convAw, A_convert);
 
-	for (int r = 0; r < convAh; r++) {
-		for (int c = 0; c < convAw; c++) {
-			cout << A_convert[r * convAw + c] << ", ";
-		}
-		cout << endl;
-	}
+
+
+
+	//定义C
+	float C[convAh * 1];
+	Matrixmul_blas(convAh, convAw, A_convert, B, C);
+	cout << "C is:" << endl;
+	show(rowC, colC, C);
 
 }
 void cblascolmajor() {
