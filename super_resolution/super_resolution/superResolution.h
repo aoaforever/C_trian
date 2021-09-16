@@ -238,7 +238,7 @@ public:
 		else {
 			for (int ch = 0; ch < dataBlob.channels; ch++) {
 				output << ch<<" channel= (\n" << dataBlob.getElement(0, 0, ch) << "\t" << dataBlob.getElement(0, 1, ch) << " ... " << dataBlob.getElement(0, dataBlob.cols - 1, ch) << endl
-					<< dataBlob.getElement(1, 0, ch) << "\t" << dataBlob.getElement(0, 1, ch) << " ... " << dataBlob.getElement(1, dataBlob.cols - 1, ch) << endl
+					<< dataBlob.getElement(1, 0, ch) << "\t" << dataBlob.getElement(1, 1, ch) << " ... " << dataBlob.getElement(1, dataBlob.cols - 1, ch) << endl
 					<< " , ..., " << endl
 					<< dataBlob.getElement(dataBlob.rows - 1, 0, ch) << "\t" << dataBlob.getElement(dataBlob.rows - 1, 1, ch) << " ... " << dataBlob.getElement(dataBlob.rows - 1, dataBlob.cols - 1, ch) << endl
 
@@ -316,30 +316,30 @@ public:
 
 		this->biases.create(1, 1, num_filters);//有多少个滤波器就有多少个偏差
 		this->biases.setZero();
-		
-		if (!this->is_3x3) {
-			//开始拷贝卷积参数到filters中
-			for (int fidx = 0; fidx < this->weights.cols; fidx++) {
-				memcpy(this->weights.ptr(0, fidx),
-					convinfo.pWeighhts + fidx * channels,
-					sizeof(T) * channels);
+		//
+		//if (!this->is_3x3) {
+		//	//开始拷贝卷积参数到filters中
+		//	for (int fidx = 0; fidx < this->weights.cols; fidx++) {
+		//		memcpy(this->weights.ptr(0, fidx),
+		//			convinfo.pWeighhts + fidx * channels,
+		//			sizeof(T) * channels);
 
-			}
-		}
-		else if (this->is_3x3) {
-			for (int r = 0; r < this->weights.rows; r++) {
-				for (int c = 0; c < this->weights.cols; c++) {
-					int filter_dix_inByte = (r * this->weights.cols + c) * this->channels;
-					memcpy(this->weights.ptr(r, c),
-						convinfo.pWeighhts + filter_dix_inByte,
-						sizeof(T) * channels);
-				}
-			}
-		}
-		
-		memcpy(this->biases.ptr(0, 0),
-			convinfo.pBiases,
-			sizeof(T) * this->num_filters);
+		//	}
+		//}
+		//else if (this->is_3x3) {
+		//	for (int r = 0; r < this->weights.rows; r++) {
+		//		for (int c = 0; c < this->weights.cols; c++) {
+		//			int filter_dix_inByte = (r * this->weights.cols + c) * this->channels;
+		//			memcpy(this->weights.ptr(r, c),
+		//				convinfo.pWeighhts + filter_dix_inByte,
+		//				sizeof(T) * channels);
+		//		}
+		//	}
+		//}
+		//
+		//memcpy(this->biases.ptr(0, 0),
+		//	convinfo.pBiases,
+		//	sizeof(T) * this->num_filters);
 
 		return *this;
 	}
