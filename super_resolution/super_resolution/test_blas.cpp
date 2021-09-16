@@ -25,6 +25,17 @@ void show(const int row, const int col, const float* mat) {
 		cout << endl;
 	}
 }
+void show_3d(const int channel, const int row, const int col, const float* mat) {
+	for (int ch= 0; ch < channel; ch++) {
+		for (int r = 0; r < row; r++) {
+			for (int c = 0; c < col; c++) {
+				cout << mat[ch * row * col + r * col + c] << ", ";
+			}
+			cout << endl;
+		}
+		cout << endl;
+	}
+}
 void convertA(float* A_convert, const int rowC, const int colC, const int convAw, const int pad_w, float* A_pad) {
 	//传入C的行列，展开后A'的宽，padding后A的宽。
 	for (int r = 0; r < rowC; r++) {
@@ -68,6 +79,30 @@ void padding(const int pad_w, const int pad_h, const int colA, float* A_pad, con
 	}
 }
 
+void padding_3d(const int pad_h, const int pad_w,const int rowA, const int colA, const int channel, float* A_pad, const float* A) {
+	//一个通道有多少个偏移量？ 对A来说，c*rowA*colA+r*colA+j
+	//对A_pad来说， c*pad_w*pad_h+r*pad_w+j
+	for (int ch = 0; ch < channel; ch++) {
+		for (int r = 0; r < pad_h; r++) {
+			for (int c = 0; c < pad_w; c++) {
+				int col = ch * pad_w * pad_h + r * pad_w + c;//其实就是偏移量了啦
+
+				if (r == 0 || r == pad_h - 1) {
+					A_pad[col] = 0;
+				}
+				else {
+					if (c == 0 || c == pad_w - 1) {
+						A_pad[col] = 0;
+					}
+					else {
+						A_pad[col] = A[ch * rowA * colA + (r - 1) * colA + c - 1];
+					}
+				}
+			}
+		}
+	}
+}
+
 void Matrixmul_blas(const int convAh, const int convAw, float* A_convert, float* B, float* C) {
 	const enum CBLAS_ORDER order = CblasRowMajor;
 	const enum CBLAS_TRANSPOSE TransA = CblasNoTrans;
@@ -86,6 +121,26 @@ void Matrixmul_blas(const int convAh, const int convAw, float* A_convert, float*
 
 
 }
+
+void Matrixmul3d_blas(const int convAh, const int convAw,const int channel,const int num_filters, float* A_convert, float* B_convert, float* C) {
+	const enum CBLAS_ORDER order = CblasRowMajor;
+	const enum CBLAS_TRANSPOSE TransA = CblasNoTrans;
+	const enum CBLAS_TRANSPOSE TransB = CblasTrans;
+	const int M = convAh;//A的行数，C的行数
+	const int N = num_filters;//B的列数，C的列数
+	const int K = convAw*channel;//A的列数，B的行数
+	const float alpha = 1;
+	const float beta = 0;
+	const int lda = K;
+	const int ldb = K;
+	const int ldc = N;
+
+	cblas_sgemm(order, TransA, TransB, M, N, K, alpha, A_convert, lda, B_convert, ldb, beta, C, ldc);
+
+
+
+}
+
 void padding_test() {
 	//卷积参数初始化
 	const int pad = 1;
@@ -143,6 +198,142 @@ void padding_test() {
 	show(rowC, colC, C);
 
 }
+
+void convertA_3d(float* A_convert, const int rowC,const int colC, const int convAw, const int pad_h ,const int pad_w, float* A_pad, const int channel)
+{
+	int pad_one_channel = pad_w * pad_h;
+	int seg = channel * convAw;
+	for (int c = 0; c < channel; c++)
+	{
+		for (int i = 0; i < rowC; i++)
+		{
+			for (int j = 0; j < colC; j++)
+			{
+				int wh = c * convAw + i * colC * seg + j * seg;
+
+				int col1 = c * pad_one_channel + i * pad_w + j;
+				A_convert[wh] = A_pad[col1];
+				A_convert[wh + 1] = A_pad[col1 + 1];
+				A_convert[wh + 2] = A_pad[col1 + 2];
+
+				int col2 = c * pad_one_channel + (i + 1) * pad_w + j;
+				A_convert[wh + 3] = A_pad[col2];
+				A_convert[wh + 4] = A_pad[col2 + 1];
+				A_convert[wh + 5] = A_pad[col2 + 2];
+
+				int col3 = c * pad_one_channel + (i + 2) * pad_w + j;
+				A_convert[wh + 6] = A_pad[col3];
+				A_convert[wh + 7] = A_pad[col3 + 1];
+				A_convert[wh + 8] = A_pad[col3 + 2];
+			}
+		}
+	}
+}
+void convertB_3d(float* B_convert, const int filters, const int channel,const int kernel, const float* B) {
+	for (int r = 0; r < filters; r++) {
+		int ptr = r * kernel * kernel * channel;
+		memcpy(B_convert+ptr, B+ptr,sizeof(float)*((size_t)kernel*kernel*channel));
+	}
+	//过后记得转置。。
+}
+
+void convertC_3d(float* C_convert, const int convAh, const int num_filters, float* C) {
+	for (int ch = 0; ch < num_filters; ch++) {
+		for (int i = 0; i < convAh; i++) {
+			C_convert[ch * convAh + i] = C[i * num_filters + ch];
+		}
+	}
+}
+
+void padding_3d_test() {
+	const int pad = 1;
+	const int stride = 1;
+
+	//定义A三维
+	const int rowA = 3;
+	const int colA = 4;
+	const int channel = 3;
+	const float A[channel * rowA * colA] = {
+		1,2,3,4,
+		2,3,4,5,
+		3,4,5,6,
+	
+
+		100,2,3,4,
+		2,3,4,5,
+		3,4,5,6,
+	
+
+		200,2,3,4,
+		2,3,4,5,
+		3,4,5,6
+	
+	};
+	//show_3d(channel, rowA, colA, A);
+	//定义三维卷积核
+	const int num_filters = 2;
+	const int kernel = 3;
+	float B[num_filters*kernel * kernel * channel] = {
+		1,1,1,
+		1,1,1,
+		2,2,2,
+
+		3,3,3,
+		3,2,3,
+		4,3,5,
+
+		2,3,4,
+		3,4,5,
+		2,3,4,
+
+		100,1,1,
+		1,1,1,
+		2,2,2,
+
+		3,3,3,
+		3,2,3,
+		4,3,5,
+
+		2,3,4,
+		3,4,5,
+		2,3,4
+	};
+
+	
+	//计算C的高宽
+	const int rowC = (rowA - kernel + 2 * pad) / stride + 1;
+	const int colC = (colA - kernel + 2 * pad) / stride + 1;
+	const int outchannel = num_filters;
+	
+	//计算三维pad_A
+	const int pad_w = colA + 2 * pad;
+	const int pad_h = rowA + 2 * pad;
+	float A_pad[channel * pad_w * pad_h];
+	padding_3d(pad_h, pad_w, rowA, colA, channel, A_pad, A);
+	show_3d(channel, pad_h, pad_w, A_pad);
+
+	//计算A'
+	const int convAw = kernel * kernel;//注意这里没channel
+	const int convAh = rowC * colC;
+	float A_convert[convAw * convAh*channel];//注意这里的channel
+	convertA_3d(A_convert, rowC,colC, convAw, pad_h,pad_w, A_pad, channel);
+	//show(convAh, convAw * channel, A_convert);
+	
+	const int rowK = num_filters;
+	const int colK = kernel * kernel * channel;
+	float B_convert[rowK * colK];
+	convertB_3d(B_convert, num_filters, channel, kernel, B);
+	show(rowK, colK, B_convert);
+
+	//记得转置卷积核的展开B_convert
+	float C[convAh*num_filters];
+	Matrixmul3d_blas(convAh, convAw, channel, num_filters, A_convert, B_convert, C);
+
+	float C_convert[rowC * colC * num_filters];
+	convertC_3d(C_convert, convAh, num_filters, C);
+	show_3d(num_filters, rowC, colC, C_convert);
+}
+
 void cblascolmajor() {
 	const int rowK = 3;
 	const int colK = 3;
@@ -320,7 +511,8 @@ void img2col() {
 
 
 void main() {
-	padding_test();
+	padding_3d_test();
+	//padding_test();
 	//img2col();
 	//CDataBlob<float> input,C;
 
