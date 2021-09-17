@@ -271,6 +271,15 @@ public:
 		with_relu = true;
 	}
 
+	Filters(int channels, int num_filters, bool is_depthwise, bool is_pointwise, bool is_3x3, bool with_relu) {
+		this->channels = channels;
+		this->num_filters = num_filters;
+		this->is_depthwise = is_depthwise;
+		this->is_pointwise = is_pointwise;
+		this->is_3x3 = is_3x3;
+		this->with_relu = with_relu;
+	}
+
 	//init the Filters
 	Filters& operator=(ConvInfoStruct& convinfo)
 	{
