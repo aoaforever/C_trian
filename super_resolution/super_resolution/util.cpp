@@ -1,4 +1,7 @@
 #include "util.h"
+#include <immintrin.h>
+#include "superResolution.h"
+#define _ENABLE_AVX2 1
 
 using namespace std;
 
@@ -46,6 +49,9 @@ void convertA(float* A_convert, const int rowC, const int colC, const int convAw
 		}
 	}
 }
+
+
+
 void padding(const int pad_w, const int pad_h, const int colA, float* A_pad, const float* A) {
 	for (int r = 0; r < pad_h; r++) {
 		for (int c = 0; c < pad_w; c++) {
@@ -92,6 +98,7 @@ void padding_3d(const int pad_h, const int pad_w, const int rowA, const int colA
 	//这种方法能快2ms，在[32,512,512]上
 
 }
+
 
 void Matrixmul_blas(const int convAh, const int convAw, float* A_convert, float* B, float* C) {
 	const enum CBLAS_ORDER order = CblasRowMajor;
@@ -161,6 +168,71 @@ void convertA_3d(float* A_convert, const int rowC, const int colC, const int con
 		}
 	}
 }
+
+void convertA_3d_CD(CDataBlob<float>& A_convert, const int rowC, const int colC, const int convAw, const int pad_h, const int pad_w, CDataBlob<float>& A_pad, const int channel)
+{
+	int pad_one_channel = pad_w * pad_h;
+	int seg = channel * convAw;
+	float* ptrA_C = A_convert.data;
+	float* ptrA_p = A_pad.data;
+	for (int c = 0; c < channel; c++)
+	{
+		for (int i = 0; i < rowC; i++)
+		{
+			for (int j = 0; j < colC; j++)
+			{
+				int wh = c * convAw + i * colC * seg + j * seg;
+
+				int col1 = c * pad_one_channel + i * pad_w + j;
+				ptrA_C[wh] = ptrA_p[col1];
+				ptrA_C[wh + 1] = ptrA_p[col1 + 1];
+				ptrA_C[wh + 2] = ptrA_p[col1 + 2];
+
+				int col2 = c * pad_one_channel + (i + 1) * pad_w + j;
+				ptrA_C[wh + 3] = ptrA_p[col2];
+				ptrA_C[wh + 4] = ptrA_p[col2 + 1];
+				ptrA_C[wh + 5] = ptrA_p[col2 + 2];
+
+				int col3 = c * pad_one_channel + (i + 2) * pad_w + j;
+				ptrA_C[wh + 6] = ptrA_p[col3];
+				ptrA_C[wh + 7] = ptrA_p[col3 + 1];
+				ptrA_C[wh + 8] = ptrA_p[col3 + 2];
+			}
+		}
+	}
+}
+
+
+void convertA_SIMD(CDataBlob<float>& A_convert, const int rowC, const int colC, CDataBlob<float>& A_pad, const int channel) {
+	//假设A按照opencv那样子排列。
+	//每次读取某位元素的所有通道，一共32通道，读到矩阵的1行上，一共读9个元素。因此一行有9*32个float。
+	//将指针直到滑动窗口的3行头地址。
+	for (int row = 0; row < rowC; row++) {
+		for (int col = 0; col < colC; col++) {
+			float* pInput1 = A_pad.ptr(row, col);
+			float* pInput2 = A_pad.ptr(row + 1, col);
+			float* pInput3 = A_pad.ptr(row + 2, col);
+		/*	int ph = 0;
+			memcpy(A_convert.ptr(row*colC+col,0)+ph, pInput1, sizeof(float) * channel * 3);
+			ph = ph + 3 * channel;
+			memcpy(A_convert.ptr(row*colC +col, 0) + ph, pInput2, sizeof(float) * channel * 3);
+			ph = ph + 3 * channel;
+			memcpy(A_convert.ptr(row*colC+col, 0) + ph, pInput3, sizeof(float) * channel * 3);
+			*/
+			for (int ch = 0; ch < channel; ch += 8) {
+				__m256 a, b, c;
+				a = _mm256_load_ps(pInput1+ch);
+				b = _mm256_load_ps(pInput2+ch);
+				c = _mm256_load_ps(pInput3+ch);
+				_mm256_store_ps(A_convert.ptr(row * colC + col, 0)+ch, a);
+				_mm256_store_ps(A_convert.ptr(row * colC + col, 0)+3*channel+ch, b);
+				_mm256_store_ps(A_convert.ptr(row * colC + col, 0)+6*channel+ch, c);
+
+			}
+		}
+	}
+	
+}
 void convertB_3d(float* B_convert, const int filters, const int channel, const int kernel, const float* B) {
 	for (int r = 0; r < filters; r++) {
 		int ptr = r * kernel * kernel * channel;
@@ -175,4 +247,84 @@ void convertC_3d(float* C_convert, const int convAh, const int num_filters, floa
 			C_convert[ch * convAh + i] = C[i * num_filters + ch];
 		}
 	}
+}
+
+
+void padding_forCDataBlob(CDataBlob<float>&A,CDataBlob<float>&A_pad,int rowA,int colA,int pad_h,int pad_w,int channel) {
+
+	A_pad.setZero();
+	for (int r = 0; r < rowA; r++) {
+		for (int c = 0; c < colA; c++) {
+			for (int ch = 0; ch < channel; ch++) {
+				A.ptr(r, c)[ch] = 1;
+			}
+		}
+	}
+	//使用这个来padding。
+	for (int r = 1; r < pad_h - 1; r++)
+	{
+
+		float* ptrA_pad = A_pad.ptr(r, 1);
+		float* ptrA = A.ptr(r - 1, 0);
+		memcpy(ptrA_pad, ptrA, sizeof(float) * channel * colA);
+
+	}
+	//不用下面这个，比较慢
+	//for (int r = 1; r < pad_h - 1; r++)
+	//{
+	//	for (int c = 1; c < pad_w - 1; c++) {
+	//		float* ptrA_pad = A_pad.ptr(r, c);
+	//		float* ptrA = A.ptr(r - 1, c - 1);
+	//		for (int ch = 0; ch < channel; ch++) {
+	//			ptrA_pad[ch] = ptrA[ch];
+	//		}
+	//	}
+	//}
+}
+
+void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A) {
+	//convertA有rowC*colC行，kernel*kernel*channel列,1通道
+	int rowC = 512;
+	int colC = 512;
+	int channel = 32;
+	
+	for (int r = 0; r < rowC; r++) {
+		for (int c = 0; c < colC; c++) {
+			float* ptr1 = A_pad.ptr(r, c);
+			float* ptr2 = convert_A.ptr(r*colC+c, 0);
+			//cout << r << ", " << c << endl;
+			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
+			ptr1 = A_pad.ptr(r + 1, c);
+			ptr2 = ptr2 + (size_t)3 * channel;
+			memcpy(ptr1, ptr2, sizeof(float) * 3 * channel);
+			ptr1 = A_pad.ptr(r + 2, c);
+			ptr2 = ptr2 + (size_t)3 * channel;
+			memcpy(ptr1, ptr2, sizeof(float) * 3 * channel);
+		}
+	}
+
+	//由于卷积核是按找[num_filters,3*3,inchannel]排列的，所以转置一下就好。
+}
+
+void Matrixmul3d_blas_forCDataBlob( const int num_filters, CDataBlob<float>& A_convert, Filters<float>& B, CDataBlob<float>& C) {
+	const enum CBLAS_ORDER order = CblasRowMajor;
+	const enum CBLAS_TRANSPOSE TransA = CblasNoTrans;
+	const enum CBLAS_TRANSPOSE TransB = CblasTrans;
+	const int M = A_convert.rows;//A的行数，C的行数
+	const int N = num_filters;//B的列数，C的列数
+	const int K = A_convert.cols;//A的列数，B的行数
+	const float alpha = 1;
+	const float beta = 0;
+	const int lda = K;
+	const int ldb = K;
+	const int ldc = N;
+
+	cblas_sgemm(order, TransA, TransB, M, N, K, alpha, A_convert.data, lda, B.weights.data, ldb, beta, C.data, ldc);
+
+
+
+}
+
+void convertC_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert) {
+	memcpy(C_convert.data, C.data, sizeof(float) * C.rows * C.cols);
 }
