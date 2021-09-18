@@ -24,6 +24,17 @@ void show_3d(const int channel, const int row, const int col, const float* mat) 
 		cout << endl;
 	}
 }
+void show_CData(CDataBlob<float>& A) {
+	for (int ch = 0; ch < A.channels; ch++) {
+		cout << "ch: " << ch << endl;
+		for (int r = 0; r < A.rows; r++) {
+			for (int c = 0; c < A.cols; c++) {
+				cout << A.ptr(r, c)[ch] << ", ";
+			}
+			cout << endl;
+		}
+	}
+}
 
 
 void convertA(float* A_convert, const int rowC, const int colC, const int convAw, const int pad_w, float* A_pad) {
@@ -253,14 +264,14 @@ void convertC_3d(float* C_convert, const int convAh, const int num_filters, floa
 void padding_forCDataBlob(CDataBlob<float>&A,CDataBlob<float>&A_pad,int rowA,int colA,int pad_h,int pad_w,int channel) {
 
 	A_pad.setZero();
-	for (int r = 0; r < rowA; r++) {
-		for (int c = 0; c < colA; c++) {
-			for (int ch = 0; ch < channel; ch++) {
-				A.ptr(r, c)[ch] = 1;
-			}
-		}
-	}
-	//使用这个来padding。
+	//for (int r = 0; r < rowA; r++) {
+	//	for (int c = 0; c < colA; c++) {
+	//		for (int ch = 0; ch < channel; ch++) {
+	//			A.ptr(r, c)[ch] = 1;
+	//		}
+	//	}
+	//}
+	//使用这个来padding。如果channel=32，可以用这个，channel<32用下面那个。因为ptr指针的定义。
 	for (int r = 1; r < pad_h - 1; r++)
 	{
 
@@ -282,49 +293,89 @@ void padding_forCDataBlob(CDataBlob<float>&A,CDataBlob<float>&A_pad,int rowA,int
 	//}
 }
 
-void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A) {
+void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,int rowC,int colC,int channel,int pad_h,int pad_w) {
 	//convertA有rowC*colC行，kernel*kernel*channel列,1通道
-	int rowC = 512;
-	int colC = 512;
-	int channel = 32;
+	
 	
 	for (int r = 0; r < rowC; r++) {
 		for (int c = 0; c < colC; c++) {
 			float* ptr1 = A_pad.ptr(r, c);
-			float* ptr2 = convert_A.ptr(r*colC+c, 0);
-			//cout << r << ", " << c << endl;
+			float* ptr2 = convert_A.ptr(0, 0)+ ((size_t)r * colC*9 + c*9)*channel;//(r*colC+c, 0);
+			////cout << r << ", " << c << endl;
+	/*		float* pInput1 = A_pad.ptr(r, c);
+			float* pInput2 = A_pad.ptr(r + 1, c);
+			float* pInput3 = A_pad.ptr(r + 2, c);
+
+			for (int ch = 0; ch < channel*3; ch += 8) {
+				__m256 a, b, ca;
+				a = _mm256_load_ps(pInput1 + ch);
+				b = _mm256_load_ps(pInput2 + ch);
+				ca = _mm256_load_ps(pInput3 + ch);
+				_mm256_store_ps(convert_A.ptr(r * colC + c, 0) + ch, a);
+				_mm256_store_ps(convert_A.ptr(r * colC + c, 0) + 3 * channel + ch, b);
+				_mm256_store_ps(convert_A.ptr(r * colC + c, 0) + 6 * channel + ch, ca);
+
+			}*/
+			//for (int i = 0; i < 3; i++) {
+			//	float* ptr1 = A_pad.ptr(r, c+i);
+			//	float* ptr2 = A_pad.ptr(r+1, c + i);
+			//	float* ptr3 = A_pad.ptr(r + 2, c + i);
+			//	for (int ch = 0; ch < channel; ch++) {
+			//		convert_A.ptr(r * colC + c, ch+i*channel)[0] = ptr1[ch];
+			//		convert_A.ptr(r * colC + c, ch + i * channel + 3*channel)[0] = ptr2[ch];
+			//		convert_A.ptr(r * colC + c, ch + i * channel + 6*channel)[0] = ptr3[ch];
+			//	}
+			//}
 			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
-			ptr1 = A_pad.ptr(r + 1, c);
+
+			//for (int i = 0; i < 32*3; i++) {
+			//	cout << ptr2[i] << ", " ;
+			//	//cout << convert_A.ptr(0,0)[i] << ", ";
+			//}
+			//cout << endl;
+
+			ptr1 = A_pad.ptr(r + 1, c);//A_pad偏移下一行，第0列.
 			ptr2 = ptr2 + (size_t)3 * channel;
-			memcpy(ptr1, ptr2, sizeof(float) * 3 * channel);
+			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
+
+
+
 			ptr1 = A_pad.ptr(r + 2, c);
 			ptr2 = ptr2 + (size_t)3 * channel;
-			memcpy(ptr1, ptr2, sizeof(float) * 3 * channel);
+			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
 		}
 	}
 
 	//由于卷积核是按找[num_filters,3*3,inchannel]排列的，所以转置一下就好。
 }
 
-void Matrixmul3d_blas_forCDataBlob( const int num_filters, CDataBlob<float>& A_convert, Filters<float>& B, CDataBlob<float>& C) {
+void Matrixmul3d_blas_forCDataBlob( const int num_filters, const int convAw, const int convAh, const int channel, float*A_convert, float*kernel, float*C) {
 	const enum CBLAS_ORDER order = CblasRowMajor;
 	const enum CBLAS_TRANSPOSE TransA = CblasNoTrans;
 	const enum CBLAS_TRANSPOSE TransB = CblasTrans;
-	const int M = A_convert.rows;//A的行数，C的行数
+	const int M = convAh;//A_convert.rows;//A的行数，C的行数
 	const int N = num_filters;//B的列数，C的列数
-	const int K = A_convert.cols;//A的列数，B的行数
+	const int K = convAw * channel;//A_convert.cols;//A的列数，B的行数
 	const float alpha = 1;
 	const float beta = 0;
 	const int lda = K;
 	const int ldb = K;
 	const int ldc = N;
 
-	cblas_sgemm(order, TransA, TransB, M, N, K, alpha, A_convert.data, lda, B.weights.data, ldb, beta, C.data, ldc);
+	cblas_sgemm(order, TransA, TransB, M, N, K, alpha, A_convert, lda, kernel, ldb, beta, C, ldc);
 
 
 
 }
 
 void convertC_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert) {
-	memcpy(C_convert.data, C.data, sizeof(float) * C.rows * C.cols);
+	//memcpy(C_convert.data, C.data, sizeof(float) * C.rows * C.cols);
+	for (int r = 0; r < C_convert.rows; r++)
+	{
+		for (int c = 0; c < C_convert.cols; c++) {
+			for (int ch = 0; ch < C_convert.channels; ch++) {
+				C_convert.ptr(r, c)[ch] = C.data[r *C_convert.cols*C_convert.channels +c * C_convert.channels + ch];
+			}
+		}
+	}
 }
