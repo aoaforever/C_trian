@@ -428,49 +428,66 @@ void convertA_simd_test() {
 	//convertA_SIMD(A_Convert, rowC, colC, A_pad, channel);
 	convertA_3d_CD(A_Convert, rowC, colC, convAw, pad_h, pad_w, A_pad, channel);
 }
-//
-//void blas_Cdatablob_Test(int rowA,int colA,int channel) {
-//
-//
-//
-//	CDataBlob<float> A, A_pad;
-//	
-//	
-//	int pad_w = colA + 2;
-//	int pad_h = rowA + 2;
-//
-//	int colC = colA;
-//	int rowC = rowA;
-//	A.create(rowA, colA, channel);
-//	A_pad.create(pad_h, pad_w, channel);
-//
-//	TIME_START
-//		padding_forCDataBlob(A, A_pad, rowA, colA, pad_h, pad_w, channel);
-//	//cout << A_pad << endl;
-//	//TIME_END("padding")
-//
-//	CDataBlob<float> convert_A;
-//	convert_A.create(rowC * colC, 3 * 3 * channel, 1);
-//	//TIME_START
-//	convertA_forCDataBlob(A_pad, convert_A);
-//	//TIME_END("convertA");
-//
-//	int num_filters = 32;
-//	CDataBlob<float>C;
-//	C.create(rowC * colC, num_filters, 1);
-//	Filters<float> kernel(32, 32, false, false, true, false);
-//	kernel.weights.create(num_filters, 9, 32);
-//	//TIME_START
-//	Matrixmul3d_blas_forCDataBlob(num_filters, convert_A, kernel, C);
-//	//TIME_END("blas");
-//
-//	CDataBlob<float>C_convert;
-//	C_convert.create(rowC, colC, num_filters);
-//	//TIME_START
-//	convertC_forCDatablob(C, C_convert);
-//	TIME_END("total")
-//
-//}
+
+void blas_Cdatablob_Test(int rowA,int colA,int channel) {
+
+
+	TIME_START
+	CDataBlob<float> A, A_pad;
+	
+	
+	int pad_w = colA + 2;
+	int pad_h = rowA + 2;
+
+	int colC = colA;
+	int rowC = rowA;
+	A.create(rowA, colA, channel);
+	//for (int ch = 0; ch < channel; ch++) {
+	//	for (int r = 0; r < rowA; r++) {
+	//		for (int c = 0; c < colA; c++) {
+	//			A.ptr(r, c)[ch] = 1;
+	//		}
+	//	}
+	//}
+	A_pad.create(pad_h, pad_w, channel);
+
+	
+	padding_forCDataBlob(A, A_pad, rowA, colA, pad_h, pad_w, channel);
+	//show_CData(A_pad);
+	//TIME_END("padding")
+
+	int convAh = rowC * colC;
+	int convAw = 3 * 3;
+	CDataBlob<float> convert_A;
+	convert_A.create(1, 1, convAh*convAw*channel);
+	//TIME_START
+	convertA_forCDataBlob(A_pad, convert_A,rowC,colC,channel,pad_h,pad_w);
+	//TIME_END("convertA");
+
+	int num_filters = 32;
+	CDataBlob<float>C;
+	C.create( 1,1, rowC*colC*num_filters);
+	C.setZero();
+	Filters<float> kernel(channel, num_filters, false, false, true, false);
+	kernel.weights.create(num_filters, 9, channel);
+	//for (int ch = 0; ch < channel; ch++) {
+	//	for (int r = 0; r < num_filters; r++) {
+	//		for (int c = 0; c < 9; c++) {
+	//			A.ptr(r, c)[ch] = 1;
+	//		}
+	//	}
+	//}
+	//TIME_START
+	Matrixmul3d_blas_forCDataBlob(num_filters,convAh,convAw,channel, convert_A.data, kernel.weights.data, C.data);
+	//TIME_END("blas");
+
+	CDataBlob<float>C_convert;
+	C_convert.create(rowC, colC, num_filters);
+	//TIME_START
+	convertC_forCDatablob(C, C_convert);
+	TIME_END("total")
+
+}
 
 void blas_Cdatablob_Test_forsure(int rowA, int colA, int channel) {
 
@@ -588,7 +605,7 @@ void main() {
 
 
 	
-	blas_Cdatablob_Test_forsure(3, 3, 32);
+	//blas_Cdatablob_Test_forsure(3, 3, 32);
 	
 
 
@@ -602,10 +619,10 @@ void main() {
 	////padding_test();
 	////img2col();
 	////CDataBlob<float> input,C;
-	//blas_Cdatablob_Test(2048, 2048, 32);
-	//ConvInfoStruct kernel1{ 32,32,false,false,true,false };
-	//Filters<float> kernel;
-	//kernel = kernel1;
+	blas_Cdatablob_Test(1024, 1024, 32);
+	ConvInfoStruct kernel1{ 32,32,false,false,true,false };
+	Filters<float> kernel;
+	kernel = kernel1;
 	//////input.create(512, 512, 32*9);
 	//////cout << "OK" << endl;
 	//////C.create(32, 512*512, 1);
@@ -617,13 +634,13 @@ void main() {
 	//////cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasConjNoTrans, r, c, k, 1, kernel.weights.data, 32*9, input.data, 512*512, 0, C.data, 512*512);
 	//////TIME_END("openBlas")
 
-	//CDataBlob<float> input1, output;
-	//input1.create(2048, 2048, 32);
-	////output.create(512, 512, 32);
-	//TIME_START
-	//convolution(input1, kernel, output, false);
-	//TIME_END("CONV")
-	//
+	CDataBlob<float> input1, output;
+	input1.create(1024, 1024, 32);
+	//output.create(512, 512, 32);
+	TIME_START
+	convolution(input1, kernel, output, false);
+	TIME_END("CONV")
+	
 
 
 }

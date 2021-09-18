@@ -300,7 +300,7 @@ void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,
 	for (int r = 0; r < rowC; r++) {
 		for (int c = 0; c < colC; c++) {
 			float* ptr1 = A_pad.ptr(r, c);
-			float* ptr2 = convert_A.ptr(0, 0)+ ((size_t)r * colC*9 + c*9)*channel;//(r*colC+c, 0);
+			float* ptr2 = convert_A.ptr(0, 0)+ ((size_t)r * colC*9 + (size_t)c*9)*channel;//(r*colC+c, 0);
 			////cout << r << ", " << c << endl;
 	/*		float* pInput1 = A_pad.ptr(r, c);
 			float* pInput2 = A_pad.ptr(r + 1, c);
@@ -326,6 +326,7 @@ void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,
 			//		convert_A.ptr(r * colC + c, ch + i * channel + 6*channel)[0] = ptr3[ch];
 			//	}
 			//}
+			
 			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
 
 			//for (int i = 0; i < 32*3; i++) {
@@ -349,7 +350,7 @@ void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,
 	//由于卷积核是按找[num_filters,3*3,inchannel]排列的，所以转置一下就好。
 }
 
-void Matrixmul3d_blas_forCDataBlob( const int num_filters, const int convAw, const int convAh, const int channel, float*A_convert, float*kernel, float*C) {
+void Matrixmul3d_blas_forCDataBlob( const int num_filters, const int convAh, const int convAw, const int channel, float*A_convert, float*kernel, float*C) {
 	const enum CBLAS_ORDER order = CblasRowMajor;
 	const enum CBLAS_TRANSPOSE TransA = CblasNoTrans;
 	const enum CBLAS_TRANSPOSE TransB = CblasTrans;

@@ -18,7 +18,7 @@ void convertC_3d(float* C_convert, const int convAh, const int num_filters, floa
 void padding_forCDataBlob(CDataBlob<float>& A, CDataBlob<float>& A_pad, int rowA, int colA, int pad_h, int pad_w, int channel);
 void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A, int rowC, int colC, int channel, int pad_h, int pad_w);
 //void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A, int rowC, int colC, int channel);
-void Matrixmul3d_blas_forCDataBlob(const int num_filters,const int convAw,const int convAh,const int channel, float* A_convert, float* kernel, float* C);
+void Matrixmul3d_blas_forCDataBlob(const int num_filters,const int convAh,const int convAw,const int channel, float* A_convert, float* kernel, float* C);
 //void Matrixmul3d_blas_forCDataBlob(const int num_filters, CDataBlob<float>& A_convert, float* kernel, float* C);
 //void Matrixmul3d_blas_forCDataBlob(const int num_filters, CDataBlob<float>& A_convert, Filters<float>& B, float* C);
 //void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A);
