@@ -25,3 +25,5 @@ void Matrixmul3d_blas_forCDataBlob(const int num_filters,const int convAh,const 
 //void Matrixmul3d_blas_forCDataBlob(const int num_filters, CDataBlob<float>& A_convert, Filters<float>& B, CDataBlob<float>& C);
 
 void convertC_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert);
+
+void convertC_addBias_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert, Filters<float>& K);
