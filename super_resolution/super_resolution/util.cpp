@@ -380,3 +380,15 @@ void convertC_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert) {
 		}
 	}
 }
+
+void convertC_addBias_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert,Filters<float>& K) {
+	//memcpy(C_convert.data, C.data, sizeof(float) * C.rows * C.cols);
+	for (int r = 0; r < C_convert.rows; r++)
+	{
+		for (int c = 0; c < C_convert.cols; c++) {
+			for (int ch = 0; ch < C_convert.channels; ch++) {
+				C_convert.ptr(r, c)[ch] = C.data[r * C_convert.cols * C_convert.channels + c * C_convert.channels + ch]+K.biases.ptr(0,0)[ch];
+			}
+		}
+	}
+}
