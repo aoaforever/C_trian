@@ -601,6 +601,31 @@ void blas_Cdatablob_Test_forsure(int rowA, int colA, int channel) {
 
 }
 
+
+void blas_bias_test() {
+	float A[9] = { 1,1,1,0,1,0,0,0,1 };
+	float B[6] = { 1,1,1,0,2,1 };
+	float C[6] = {};
+
+	int M = 3;
+	int N = 2;
+	int K = 3;
+	float alpha = 1;
+	float beta = 1;
+	int lda = K;
+	int ldb = K;
+	int ldc = N;
+	
+
+
+	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, M,N,K,alpha,A,lda,B,ldb,beta,C,ldc);
+	for (int r = 0; r < 3; r++) {
+		for (int c = 0; c < 2; c++) {
+			cout << C[r * 2 + c] << ", ";
+		}
+		cout << endl;
+	}
+}
 void main() {
 
 
@@ -619,10 +644,10 @@ void main() {
 	////padding_test();
 	////img2col();
 	////CDataBlob<float> input,C;
-	blas_Cdatablob_Test(1024, 1024, 32);
-	ConvInfoStruct kernel1{ 32,32,false,false,true,false };
-	Filters<float> kernel;
-	kernel = kernel1;
+	//blas_Cdatablob_Test(128, 128, 32);
+	//ConvInfoStruct kernel1{ 32,32,false,false,true,false };
+	//Filters<float> kernel;
+	//kernel = kernel1;
 	//////input.create(512, 512, 32*9);
 	//////cout << "OK" << endl;
 	//////C.create(32, 512*512, 1);
@@ -634,13 +659,15 @@ void main() {
 	//////cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasConjNoTrans, r, c, k, 1, kernel.weights.data, 32*9, input.data, 512*512, 0, C.data, 512*512);
 	//////TIME_END("openBlas")
 
-	CDataBlob<float> input1, output;
-	input1.create(1024, 1024, 32);
-	//output.create(512, 512, 32);
-	TIME_START
-	convolution(input1, kernel, output, false);
-	TIME_END("CONV")
-	
+	//CDataBlob<float> input1, output;
+	//input1.create(128, 128, 32);
+	////output.create(512, 512, 32);
+	//TIME_START
+	//convolution(input1, kernel, output, false);
+	//TIME_END("CONV")
+	//
+
+	blas_bias_test();
 
 
 }
