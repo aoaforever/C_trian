@@ -7,8 +7,10 @@
 #include <algorithm>//for stable_sort, sort
 #include <omp.h>
 #include <opencv.hpp>
+#include "util.h"
 #define OPENMP_ONOFF  1
 #define threads 12
+#define CBLAS_CONV 0
 
 
 
@@ -281,7 +283,38 @@ bool convolution_3x3depthwise(CDataBlob<float>& inputData, Filters<float>& filte
     }
     return true;
 }
+bool convolution_3x3blas(CDataBlob<float>& A, Filters<float>& B, CDataBlob<float>& C) {
+    cout << "doing cblas" << endl;
+    int pad_w = A.cols + 2;//这里简单化了 ，没有套用公式，而是直接+2
+    int pad_h = A.rows + 2;
+    
+    CDataBlob<float> A_pad;
+    A_pad.create(pad_h, pad_w, A.channels);
+    padding_forCDataBlob(A, A_pad, A.rows, A.cols, pad_h, pad_w, A.channels);
+    
+    //show_CData(A_pad);//展示padding后的A。
 
+    int convAh = C.rows * C.cols;
+    int convAw = 3 * 3;
+    CDataBlob<float> convert_A;
+    convert_A.create(1, 1, convAh * convAw * A.channels);
+    convertA_forCDataBlob(A_pad, convert_A, C.rows, C.cols, A.channels, pad_h, pad_w);
+
+    //show(C.rows * C.cols, 3 * 3 * A.channels, convert_A.data);//展示转换称矩阵后的A
+
+    CDataBlob<float> C_mid;
+    C_mid.create(1, 1, C.rows * C.cols * C.channels);
+    C_mid.setZero();
+
+    Matrixmul3d_blas_forCDataBlob(C.channels, convAh, convAw, A.channels, convert_A.data, B.weights.data, C_mid.data);
+    
+    //show_3d(C.channels, C.rows, C.cols, C_mid.data);//展示卷积后的结果
+
+    convertC_addBias_forCDatablob(C_mid, C, B);
+    
+    //show_CData(C);//展示最终结果
+    return true;
+}
 bool relu(CDataBlob<float>& inputoutputData)
 {
     if (inputoutputData.isEmpty())
@@ -343,12 +376,15 @@ bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob
 
     outputData.create(inputData.rows, inputData.cols, filters.num_filters);
 
-    if (filters.is_pointwise && !filters.is_depthwise )
+    if (filters.is_pointwise && !filters.is_depthwise)
         convolution_1x1pointwise(inputData, filters, outputData);
-    else if (!filters.is_pointwise && filters.is_depthwise )
+    else if (!filters.is_pointwise && filters.is_depthwise)
         convolution_3x3depthwise(inputData, filters, outputData);
-    else if (filters.is_3x3 )
-        convolution_3x3default(inputData, filters, outputData);
+    else if (filters.is_3x3)
+        if (CBLAS_CONV)
+            convolution_3x3blas(inputData,filters,outputData);
+        else 
+            convolution_3x3default(inputData, filters, outputData);
     else
     {
         cerr << __FUNCTION__ << ": Unsupported filter type." << endl;
