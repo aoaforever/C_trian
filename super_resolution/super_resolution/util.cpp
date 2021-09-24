@@ -328,7 +328,11 @@ void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,
 			//}
 			
 			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
-
+		/*	for (int ch = 0; ch < 3*channel; ch += 8) {
+				__m256 a;
+				a = _mm256_load_ps(ptr1 + ch);
+				_mm256_store_ps(ptr2 + ch, a);
+			}*/
 			//for (int i = 0; i < 32*3; i++) {
 			//	cout << ptr2[i] << ", " ;
 			//	//cout << convert_A.ptr(0,0)[i] << ", ";
@@ -338,16 +342,55 @@ void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,
 			ptr1 = A_pad.ptr(r + 1, c);//A_pad偏移下一行，第0列.
 			ptr2 = ptr2 + (size_t)3 * channel;
 			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
-
+	/*		for (int ch = 0; ch < 3 * channel; ch += 8) {
+				__m256 a;
+				a = _mm256_load_ps(ptr1 + ch);
+				_mm256_store_ps(ptr2 + ch, a);
+			}*/
 
 
 			ptr1 = A_pad.ptr(r + 2, c);
 			ptr2 = ptr2 + (size_t)3 * channel;
 			memcpy(ptr2, ptr1, sizeof(float) * 3 * channel);
+	/*		for (int ch = 0; ch < 3 * channel; ch += 8) {
+				__m256 a;
+				a = _mm256_load_ps(ptr1 + ch);
+				_mm256_store_ps(ptr2 + ch, a);
+			}*/
 		}
 	}
 
 	//由于卷积核是按找[num_filters,3*3,inchannel]排列的，所以转置一下就好。
+}
+void convertA_test_forCDataBlob(CDataBlob<float>& A, CDataBlob<float>& convert_A, int rowC, int colC, int channel) {
+	//convertA有rowC*colC行，kernel*kernel*channel列,1通道
+
+
+	for (int r = 0; r < rowC; r++) {
+		int srcy_start = r - 1;
+		int srcy_end = srcy_start + 3;
+		srcy_start = MAX(0, srcy_start);
+		srcy_end = MIN(srcy_end, A.rows);
+
+		for (int c = 0; c < colC; c++) {
+			int srcx_start = c - 1;
+			int srcx_end = srcx_start + 3;
+			srcx_start = MAX(0, srcx_start);
+			srcx_end = MIN(srcx_end, A.cols);
+
+			for (int row = srcy_start; row < srcy_end; row++) {
+				for (int col = srcx_start; col < srcx_end; col++) {
+					float* pIn = A.ptr(row, col);
+					int f_r = row - r + 1;
+					int f_c = col - c + 1;
+					int filter_idx =( 3 * f_r + f_c)*channel;
+					float* pOut = convert_A.data + ((size_t)r*colC+c)*9*channel+filter_idx;
+					memcpy(pOut, pIn, sizeof(float) * channel);
+				}
+				
+			}
+		}
+	}
 }
 
 void Matrixmul3d_blas_forCDataBlob( const int num_filters, const int convAh, const int convAw, const int channel, float*A_convert, float*kernel, float*C) {
@@ -392,3 +435,8 @@ void convertC_addBias_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_conv
 		}
 	}
 }
+
+//void main() {
+//	CDataBlob<float> a, b;
+//	convertA_test_forCDataBlob(a, b, 3, 3, 32, 5, 5);
+//}
