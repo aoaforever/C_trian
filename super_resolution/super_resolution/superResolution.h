@@ -2,7 +2,7 @@
 
 
 #define _ENABLE_AVX2 1
-
+#define FLAG 1
 #if defined(_ENABLE_AVX512)||defined(_ENABLE_AVX2)
 #include<immintrin.h>
 #endif
@@ -88,7 +88,8 @@ public:
 	void setZero()
 	{
 		if (data)
-			memset(data, 0 ,channelStep * rows * cols);
+			//memset(data, 0 ,channelStep * rows * cols);
+			memset(data, 0 ,channels * rows * cols);
 	}
 
 	inline bool isEmpty() {
@@ -103,12 +104,15 @@ public:
 		channels = ch;
 
 		//alloc space  for int8 array
-		int remBytes = (sizeof(T) * channels) % (_MALLOC_ALIGN / 8);
+
+		/*int remBytes = (sizeof(T) * channels) % (_MALLOC_ALIGN / 8);
 		if (remBytes == 0)
 			this->channelStep = channels * sizeof(T);
 		else
-			this->channelStep = (channels * sizeof(T)) + (_MALLOC_ALIGN / 8) - remBytes;
-		data = (T*)myAlloc(size_t(rows) * cols * this->channelStep);
+			this->channelStep = (channels * sizeof(T)) + (_MALLOC_ALIGN / 8) - remBytes;*/
+		//cout << ".h : this->channelStep=" << this->channelStep << endl;
+		//data = (T*)myAlloc(size_t(rows) * cols * this->channelStep);
+		data = (T*)myAlloc(size_t(rows) * cols * channels*sizeof(T));
 
 		if (data == NULL)
 		{
@@ -123,11 +127,22 @@ public:
 	}
 
 	inline T* ptr(int r, int c) {//用于指向图像某位置的指针
-		if (r < 0 || r >= this->rows || c < 0 || c >= this->cols)
+		if (r < 0 || r >= this->rows || c < 0 || c >= this->cols) {
+			cerr << "ptr(r,c)超出范围,请使用ptr(r,c,ch,rows,cols)" << endl;
 			return NULL;
+		}
 
 		return (this->data + (size_t(r) * this->cols + c) * this->channelStep / sizeof(T));
 
+
+	}
+	inline T* ptr(int r, int c, int ch,int rows, int cols) {//取r行，c列。一共rows行，cols列，超出范围将出错。
+		//A.ptr(0,0,32,3)[1] 表示0行0列，一共32通道，取第一通道的值。
+		if (r>=rows||r<0||c>=cols||c<0) {
+			cerr << "ptr(r,c,ch,rows,cols)超出范围，请检查" << endl;
+			return NULL;
+		}
+		return (this->data + (size_t(r) * cols + c) * ch);
 	}
 
 	bool convertDatatoCDataBlob(const unsigned char* imgData, int imgWidth, int imgHeight, int imgChannels, int imgWidthStep) {
@@ -325,34 +340,36 @@ public:
 
 		this->biases.create(1, 1, num_filters);//有多少个滤波器就有多少个偏差
 		this->biases.setZero();
-		//
-		//if (!this->is_3x3) {
-		//	//开始拷贝卷积参数到filters中
-		//	for (int fidx = 0; fidx < this->weights.cols; fidx++) {
-		//		memcpy(this->weights.ptr(0, fidx),
-		//			convinfo.pWeighhts + fidx * channels,
-		//			sizeof(T) * channels);
+		
+		if (!this->is_3x3) {
+			//开始拷贝卷积参数到filters中
+			for (int fidx = 0; fidx < this->weights.cols; fidx++) {
+				memcpy(this->weights.ptr(0, fidx),
+					convinfo.pWeighhts + fidx * channels,
+					sizeof(T) * channels);
 
-		//	}
-		//}
-		//else if (this->is_3x3) {
-		//	for (int r = 0; r < this->weights.rows; r++) {
-		//		for (int c = 0; c < this->weights.cols; c++) {
-		//			int filter_dix_inByte = (r * this->weights.cols + c) * this->channels;
-		//			memcpy(this->weights.ptr(r, c),
-		//				convinfo.pWeighhts + filter_dix_inByte,
-		//				sizeof(T) * channels);
-		//		}
-		//	}
-		//}
-		//
-		//memcpy(this->biases.ptr(0, 0),
-		//	convinfo.pBiases,
-		//	sizeof(T) * this->num_filters);
+			}
+		}
+		else if (this->is_3x3) {
+			for (int r = 0; r < this->weights.rows; r++) {
+				for (int c = 0; c < this->weights.cols; c++) {
+					int filter_dix_inByte = (r * this->weights.cols + c) * this->channels;
+					memcpy(this->weights.ptr(r, c),
+						convinfo.pWeighhts + filter_dix_inByte,
+						sizeof(T) * channels);
+				}
+			}
+		}
+		
+		memcpy(this->biases.ptr(0, 0),
+			convinfo.pBiases,
+			sizeof(T) * this->num_filters);
 
 		return *this;
 	}
 };
+
+
 
 bool convolution(CDataBlob<float>& inputData, Filters<float>& filters, CDataBlob<float>& outputData, bool do_relu = true);
 bool pixelShuffle(CDataBlob<float>& inputData, CDataBlob<float>& outputData, int up_scale);
@@ -360,3 +377,4 @@ float superResolution(unsigned char* rgbImageData, int width, int height, int st
 bool convolutionforsimpleblocks(CDataBlob<float>& inputData, Filters<float>& filters1, Filters<float>& filters2, Filters<float>& filters3, Filters<float>& filters4,
 	CDataBlob<float>& outputData, bool do_relu = true);
 bool PixelAdd(CDataBlob<float>& inputData, CDataBlob<float>& outputData);
+bool convolution_3x3blas(CDataBlob<float>& A, Filters<float>& B, CDataBlob<float>& C);
