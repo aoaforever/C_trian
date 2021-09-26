@@ -2,9 +2,10 @@
 #include <immintrin.h>
 #include "superResolution.h"
 #define _ENABLE_AVX2 1
-
+#include <omp.h>
 using namespace std;
-
+#define OPENMP_ONOFF 0
+#define threads 12
 void show(const int row, const int col, const float* mat) {
 	for (int r = 0; r < row; r++) {
 		for (int c = 0; c < col; c++) {
@@ -364,28 +365,31 @@ void convertA_forCDataBlob(CDataBlob<float>& A_pad, CDataBlob<float>& convert_A,
 }
 void convertA_test_forCDataBlob(CDataBlob<float>& A, CDataBlob<float>& convert_A, int rowC, int colC, int channel) {
 	//convertA有rowC*colC行，kernel*kernel*channel列,1通道
+#if OPENMP_ONOFF
+#pragma omp parallel for num_threads(threads)
 
-
+#endif
 	for (int r = 0; r < rowC; r++) {
 		int srcy_start = r - 1;
 		int srcy_end = srcy_start + 3;
 		srcy_start = MAX(0, srcy_start);
 		srcy_end = MIN(srcy_end, A.rows);
-
+		
 		for (int c = 0; c < colC; c++) {
 			int srcx_start = c - 1;
 			int srcx_end = srcx_start + 3;
 			srcx_start = MAX(0, srcx_start);
 			srcx_end = MIN(srcx_end, A.cols);
-
+			float* pOut = convert_A.data + (size_t)r * colC * 9 * channel + c * 9 * channel;
 			for (int row = srcy_start; row < srcy_end; row++) {
 				for (int col = srcx_start; col < srcx_end; col++) {
 					float* pIn = A.ptr(row, col);
 					int f_r = row - r + 1;
 					int f_c = col - c + 1;
 					int filter_idx =( 3 * f_r + f_c)*channel;
-					float* pOut = convert_A.data + ((size_t)r*colC+c)*9*channel+filter_idx;
-					memcpy(pOut, pIn, sizeof(float) * channel);
+					//float* pOut = convert_A.data + ((size_t)r*colC+c)*9*channel+filter_idx;
+					memcpy(pOut+filter_idx, pIn, sizeof(float) * channel);
+					//memcpy(pOut , pIn, sizeof(float) * channel);
 				}
 				
 			}
@@ -414,6 +418,7 @@ void Matrixmul3d_blas_forCDataBlob( const int num_filters, const int convAh, con
 
 void convertC_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert) {
 	//memcpy(C_convert.data, C.data, sizeof(float) * C.rows * C.cols);
+
 	for (int r = 0; r < C_convert.rows; r++)
 	{
 		for (int c = 0; c < C_convert.cols; c++) {
@@ -425,12 +430,24 @@ void convertC_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert) {
 }
 
 void convertC_addBias_forCDatablob(CDataBlob<float>& C, CDataBlob<float>& C_convert,Filters<float>& K) {
+
 	//memcpy(C_convert.data, C.data, sizeof(float) * C.rows * C.cols);
-	for (int r = 0; r < C_convert.rows; r++)
+#if OPENMP_ONOFF
+#pragma omp parallel for num_threads(threads)
+#endif
+	float* p_kernel = K.biases.ptr(0, 0);
+
+	for (size_t r = 0; r < C_convert.rows; r++)
 	{
-		for (int c = 0; c < C_convert.cols; c++) {
-			for (int ch = 0; ch < C_convert.channels; ch++) {
-				C_convert.ptr(r, c)[ch] = C.data[r * C_convert.cols * C_convert.channels + c * C_convert.channels + ch]+K.biases.ptr(0,0)[ch];
+		for (size_t c = 0; c < C_convert.cols; c++){
+
+			float* p_C_convert = C_convert.ptr(r, c);
+			size_t idx = r * (size_t)C_convert.cols * C_convert.channels + c * C_convert.channels ;
+			for (size_t ch = 0; ch < C_convert.channels; ch++) {
+				idx =  idx+ch;
+				//C_convert.ptr(r, c)[ch] = C.data[r * C_convert.cols * C_convert.channels + c * C_convert.channels + ch]+K.biases.ptr(0,0)[ch];
+
+				p_C_convert[ch] = C.data[idx] + p_kernel[ch];
 			}
 		}
 	}
