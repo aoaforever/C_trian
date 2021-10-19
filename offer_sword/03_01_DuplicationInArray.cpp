@@ -10,7 +10,7 @@
 //返回bool
 bool  duplicate(int numbers[], int length, int* duplication)
 {
-    printf("asdasd");
+
     //错误类型判断
     if(numbers==nullptr||length<=0)
     {
@@ -26,21 +26,27 @@ bool  duplicate(int numbers[], int length, int* duplication)
 
     //开始算法
     for (int i =0; i < length; i++ ){
+    
         //当下标指向的元素值不等于该下标值时
         while(numbers[i]!= i){
             
             //发现重复的元素
             if(numbers[i]==numbers[numbers[i]])
-            {
+            {   
+              
                 *duplication = numbers[i];
+                printf("%d",*duplication);
+                //这里一旦找到了重复的值，就会退出，并不会找接下来重复的值。。。。
+                
                 return true;
             }
             
             //交换
+            
             int temp = numbers[i];
             numbers[i]=numbers[numbers[i]];
-            numbers[numbers[i]]=temp;
-            //或者numbers[temp]=temp;
+            //这个是错的！！！！！！！！！！！！！！！numbers[numbers[i]]=temp;
+            numbers[temp]=temp;
 
         }
 
@@ -140,6 +146,10 @@ void test6()
 int main()
 {
     test1();
-
+    test2();
+    test3();
+    test4();
+    test5();
+    test6();
     return 0;
 }
