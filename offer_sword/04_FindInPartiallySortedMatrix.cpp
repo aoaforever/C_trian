@@ -135,13 +135,18 @@ void Test7()
 
 int main(int argc, char* argv[])
 {
-    Test1();
-    Test2();
-    Test3();
-    Test4();
-    Test5();
-    Test6();
-    Test7();
+    int matrix[][4]={{1,2,3,4},{123,12,324,23}};
+    std::cout<<matrix[5]<<"\n";
+    int *a=(int*) matrix;//将二维数组转换为一维数组。
+    std::cout<<a[5];
+
+    // Test1();
+    // Test2();
+    // Test3();
+    // Test4();
+    // Test5();
+    // Test6();
+    // Test7();
 
     return 0;
 }
