@@ -1,0 +1,44 @@
+#include<vector>
+
+using namespace std;
+
+/*
+给定一个包含红色、白色和蓝色，一共 n 个元素的数组，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+
+此题中，我们使用整数 0、 1 和 2 分别表示红色、白色和蓝色。
+
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/sort-colors
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+*/
+
+//只有0、1、2三种情况
+//遍历到0，放头部，i++、zero++;
+//遍历到1,i++;
+//遍历到2放尾部,i不变，two--;
+class Solution{
+public:
+    void sortColors(vector<int>& nums){
+        int len = nums.size();
+
+        //两个下标分别记录头部位置和尾部位置
+        int zero = 0 ; 
+        int two = len;
+
+        for(int i =0; i<two; i++){//循环结束的条件是关键！！
+            if(nums[i]==0){
+                swap(nums[i],nums[zero]);
+                ++zero;
+            }
+            else if(nums[i]==1){
+                continue;
+            }
+            else{//nums[i]==2
+                --two;
+                swap(nums[i],nums[two]);
+                i--;//关键！！
+            }
+        }
+        
+    }
+};
