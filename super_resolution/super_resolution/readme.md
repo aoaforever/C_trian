@@ -6,4 +6,4 @@
 [superResolution.cpp](https://github.com/aoaforever/C_trian/blob/master/super_resolution/super_resolution/superResolution.cpp)
 
 ## 致谢：
-本项目基础架构来自于[libfacedetection]项目
+本项目基础架构来自于[libfacedetection](https://github.com/ShiqiYu/libfacedetection)项目
