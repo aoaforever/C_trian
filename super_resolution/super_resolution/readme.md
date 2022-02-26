@@ -4,3 +4,6 @@
 [superResolution.h](https://github.com/aoaforever/C_trian/blob/master/super_resolution/super_resolution/superResolution.h)    
 ### c++/AVX2指令加速的与openblas矩阵加速库的卷积实现  
 [superResolution.cpp](https://github.com/aoaforever/C_trian/blob/master/super_resolution/super_resolution/superResolution.cpp)
+
+## 致谢：
+本项目基础架构来自于[libfacedetection]项目
