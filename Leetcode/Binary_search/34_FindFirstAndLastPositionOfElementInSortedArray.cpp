@@ -92,7 +92,7 @@ public:
             mid=left+ (right-left)/2;
 
             if(nums[mid]<=target){
-                left = mid+1;//不能-1
+                left = mid+1;//不能-1，因为左闭右开，所以左可以加1
             }
             else {
                 right=mid;
@@ -108,7 +108,7 @@ public:
         if(nums.size()==1 && nums[0]==target) return vector<int>{0,0};
 
         int lower = lower_bound(nums,target);
-        int upper = upper_bound(nums,target)-1;
+        int upper = upper_bound(nums,target)-1;//为什么减一，因为左闭右开，右一开始是指向越界的。
 
         if(  lower==nums.size()||nums[lower]!=target){//顺序不能反。
             return vector<int>{-1,-1};
