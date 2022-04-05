@@ -11,7 +11,7 @@ public:
         int w =0;
         for(int i = 0 ; i<weights.size();i++){
             // cout<<"w:"<<w<<endl;
-            if((w + weights[i]) > ship){
+            if((w + weights[i]) > ship){//先判断会不会满，满的话清空，下一天。你如果先强塞进去，在判断，肯定会超载。
                 w = 0 ; 
                 days++;
             }
