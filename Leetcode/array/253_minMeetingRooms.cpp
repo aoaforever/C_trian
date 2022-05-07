@@ -9,6 +9,7 @@ using namespace std;
 //         for(vector<int>& v:intervals){
 //             for(int&  val:v){
 //                 max_val =max(max_val,val);
+
 //             }
 //         }
 //         //直接构建差分数组v

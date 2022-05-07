@@ -86,3 +86,40 @@ public:
     }
 
 };
+
+//扑克牌，二分解法
+class Solution {
+public:
+    
+    int lengthOfLIS(vector<int>& nums) {
+        int piles =0;
+        vector<int> top(nums.size());//最多右nums.size()个堆
+        for(int i=0;i<nums.size();i++){
+            int l=0, r=piles;//左闭右开[l,r)
+            int target = nums[i];//将这张牌插入哪里。
+            while(l<r){//结束条件
+                int mid = l + (r-l)/2;
+                //升序
+                if(top[mid]<target){
+                    l = mid+1;
+                }
+                else if(top[mid]>target){
+                    r = mid;
+                }
+                else{
+                    r = mid;//
+                }
+            }
+            //失败情况，一直往右找，l越界。
+            //一直往左找，r越界，l=0
+            //如果牌堆数=3,piles=3,区间[0,3),l越界就是l=3
+            if(l==piles){
+                //越界,新建一个牌堆
+                piles++;
+            }
+            top[l] = target;
+        }
+        return piles;
+    }
+
+};

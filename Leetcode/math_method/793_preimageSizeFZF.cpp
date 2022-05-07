@@ -50,6 +50,7 @@ public:
     }
 
     long left_bound(int k){
+        
         long left =0, right = LONG_MAX;//[left,right)，左闭右开，结束条件left=right
         while(left<right){
             long mid = left+ (right-left)/2;
