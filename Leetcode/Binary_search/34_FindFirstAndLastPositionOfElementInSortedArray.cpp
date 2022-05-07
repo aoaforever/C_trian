@@ -174,3 +174,70 @@ public:
         return vector<int>{lower,upper};
     }
 };
+
+
+
+
+
+
+
+//二刷答案
+class Solution {
+public:
+    vector<int> searchRange(vector<int>& nums, int target) {
+        //已经升序排列，找出左右边界
+        int l = left_bound(nums,target);
+        int r = right_bound(nums,target);
+        return {l,r};
+    }
+    int left_bound(vector<int>&nums,int target){
+        //找左边界
+        int l = 0, r = nums.size()-1;//左闭右闭[l,r]
+        while(l<=r){//左闭右闭得结束条件l<=r
+            int mid = l + (r-l)/2;
+            //升序
+            if(nums[mid]<target){
+                //当前太小了,
+                l = mid+1;
+            }
+            else if(nums[mid]>target){
+                r = mid-1;
+            }
+            else {
+                //相等，但是找左区间，因此
+                r = mid-1;
+            }
+        }
+        //失败得情况，一直往右招，l越界
+        //一直往左找，r越界,l=0
+        if(l>=nums.size()||nums[l]!=target){
+            return -1;
+        }
+        return l;
+    }
+    int right_bound(vector<int>&nums,int target){
+        //找右边界
+        int l = 0, r = nums.size()-1;//左闭右闭[l,r]
+        while(l<=r){//左闭右闭得结束条件l<=r
+            int mid = l + (r-l)/2;
+            //升序
+            if(nums[mid]<target){
+                //当前太小了,
+                l = mid+1;
+            }
+            else if(nums[mid]>target){
+                r = mid-1;
+            }
+            else {
+                //相等，但是找右区间，因此
+                l = mid+1;
+            }
+        }
+        //失败得情况，一直往右招，l越界
+        //一直往左找，r越界,l=0
+        if(r<0||nums[r]!=target){
+            return -1;
+        }
+        return r;//找最简单得例子[7,7]就可以得出
+    }
+};
