@@ -61,6 +61,9 @@ public:
 int main(){
     Solution solution;
     vector<vector<int>> updates{{1,3,2},{2,4,3},{0,2,-2}};
-    solution.getModifiedArray(5,updates);
+    auto nums = solution.getModifiedArray(5,updates);
+    for(auto & i : nums){
+        cout<<i<<" ";
+    }
     return 0;
 }
