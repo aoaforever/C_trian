@@ -1,6 +1,6 @@
 #include <string>
 #include <vector>
-
+#include <unordered_map>
 using namespace std;
 /*给你一个字符串 s 、一个字符串 t 。
 返回 s 中涵盖 t 所有字符的最小子串。
@@ -45,4 +45,61 @@ public:
         }
         return min_size > S.size() ? "": S.substr(min_l,min_size);
     }
+};
+
+
+
+
+//labuladong的算法
+class Solution{
+public:
+    string minWindow(string S, string T){
+        unordered_map<char,int> need, window;
+        for(char c: T){
+            need[c]++;
+        }
+
+        int left =0, right=0; 
+        int valid =0;
+        //记录最小覆盖字串的起始索引及长度，这么做的好处是：只使用指针来定位子串，而不是单独复制出来。
+        int start =0, len = INT_MAX;
+        while(right<S.size()){//走一遍S就能得到结果,O(n)时间复杂度
+            //c是将要移入窗口的字符
+            char c = S[right];
+            //右移窗口
+            right++;
+            //进行窗口内数据的一系列更新
+            if(need.count(c)){//如果c字符是T中存在的
+                window[c]++;
+                if(window[c]==need[c]){//如果值相等，表示这个字符已经找够了
+                    valid++;
+                }
+            }
+
+            //判断左侧窗口是否要收缩
+            while(valid == need.size()){//T.size()是否可行？
+                //在这里更新最小覆盖字串
+                if(right-left< len){
+                    start = left;
+                    len = right-left;//因为是开区间，所以不用+1了。
+                }
+
+                //d是将要移出窗口的字符
+                char d = S[left];
+                //左移窗口
+                left++;
+
+                //进行窗口内数据的一系列更新
+                if(need.count(d)){//如果移出的字符刚好是T中的字符
+                    if(window[d]==need[d]){//如果移多了，说明不满足条件了，需要减少
+                        valid--;
+                    }
+                    window[d]--;
+                }
+            }
+        }
+        return len==INT_MAX? "" : S.substr(start,len);
+    }
+
+
 };
