@@ -1,3 +1,7 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
 struct TreeNode {
     int val;
     TreeNode *left;
@@ -10,7 +14,7 @@ struct TreeNode {
 //二叉树的最大深度
 int maxDepth(TreeNode* root){
 
-    if (root==NULL){
+    if (root==nullptr){
         return 0;
     }
     //先知道左右子树的最大深度
