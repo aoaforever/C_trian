@@ -48,7 +48,7 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-
+//动态规划方法，求树的高度
 // class Solution {
 // public:
 //     int res;
@@ -65,6 +65,9 @@ using namespace std;
 //         return len;
 //     }
 // };
+
+
+//回溯法，取最深的
 class Solution {
 public:
     int res;
@@ -75,10 +78,13 @@ public:
     void backtrack(TreeNode* root,int len){
         if(root==NULL){
             res = max(res,len);
+            //这里就是知道叶子节点才更新深度
             return;
         }
         
         len++;
+        //也可以在这里更新，这里就指的是每条节点都更新一边
+        // res = Math.max(res, depth);
         backtrack(root->left,len);
         backtrack(root->right,len);
         len--;
