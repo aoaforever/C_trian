@@ -63,27 +63,51 @@
 #include <algorithm>
 #include <queue>
 using namespace std;
+// class Solution {
+// public:
+//     int minDepth(TreeNode* root) {
+//         if(root==NULL) return 0;
+//         queue<TreeNode*> q;
+//         q.push(root);
+//         int res=1;//记录深度
+//         while(!q.empty()){
+//             int sz = q.size();
+//             for(int i=0;i<sz;i++){
+//                 //这一层全遍历，才会进入下一层
+//                 TreeNode* sss= q.front();
+//                 q.pop();
+//                 if(sss->left==NULL&&sss->right==NULL) return res;
+//                 if(sss->left!=NULL) q.push(sss->left);
+//                 if(sss->right!=NULL) q.push(sss->right);
+                
+//             }
+//             res++;
+//         }
+//         return res;
+//     }
+// };
+
 class Solution {
 public:
     int minDepth(TreeNode* root) {
         if(root==NULL) return 0;
         queue<TreeNode*> q;
         q.push(root);
-        int res=1;//记录深度
+        int len=1;
         while(!q.empty()){
             int sz = q.size();
+            
+
             for(int i=0;i<sz;i++){
-                //这一层全遍历，才会进入下一层
-                TreeNode* sss= q.front();
+                TreeNode* r = q.front();
                 q.pop();
-                if(sss->left==NULL&&sss->right==NULL) return res;
-                if(sss->left!=NULL) q.push(sss->left);
-                if(sss->right!=NULL) q.push(sss->right);
-                
+                if(r->left) q.push(r->left);
+                if(r->right) q.push(r->right);
+                if(r->left==NULL&&r->right==NULL) return len;
             }
-            res++;
+            len++;
         }
-        return res;
+        return len;
     }
 };
 // @lc code=end

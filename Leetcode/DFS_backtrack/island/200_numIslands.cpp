@@ -7,7 +7,7 @@ class Solution {
 public:
     int numIslands(vector<vector<char>>& grid) {
         if(grid.size()==0||grid[0].size()==0 ) return 0;
-        int res =0;
+        int res =0;//要初始化为0，不然不确定答案
         int row = grid.size();
         int col = grid[0].size();
         for(int i=0;i<row;i++){
