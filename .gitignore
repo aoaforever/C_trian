@@ -3,6 +3,7 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+super_resolution/super_resolution/
 TinyWebServer-master/
 *.sln
 *.vcxproj
@@ -368,3 +369,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
