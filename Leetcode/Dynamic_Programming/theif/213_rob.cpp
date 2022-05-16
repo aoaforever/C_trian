@@ -22,3 +22,26 @@ public:
         return dp_1;
     }
 };
+
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        return max(rob_range(nums,0,nums.size()-1),rob_range(nums,1,nums.size()));
+    }
+
+    int rob_range(vector<int>& nums,int start,int end) {
+        if(nums.size()==1) return nums[0];
+        
+        int dp_1=0,dp_2=0,dp;
+        
+        // 
+        
+        for(int i=start;i<end;i++){
+            dp = max(dp_1,dp_2+nums[i]);
+            dp_2 = dp_1;
+            dp_1 = dp;
+        }
+        return dp;
+        
+    }
+};
