@@ -38,3 +38,22 @@ public:
         return max(dp[n][0],dp[n][1]);
     }
 };
+
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        if(nums.size()==1) return nums[0];
+        
+        int dp_1=0,dp_2=0,dp;
+        
+        // 
+        
+        for(int i=0;i<nums.size();i++){
+            dp = max(dp_1,dp_2+nums[i]);
+            dp_2 = dp_1;
+            dp_1 = dp;
+        }
+        return dp;
+        
+    }
+};
