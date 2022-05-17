@@ -55,3 +55,32 @@ public:
         return memo[n];
     }
 };
+
+class Solution {
+public:
+    vector<int> memo;
+    int maxSubArray(vector<int>& nums) {
+        memo.resize(nums.size(),-1);
+        dp(nums,nums.size()-1);
+        int res=INT_MIN;
+        for(auto i:memo){
+            res = max(res,i);
+        }
+        return res;
+    }
+    int dp(vector<int>& nums,int index){
+        //dp[index]以index为结尾的最大和的连续子数组
+        if(index<0){
+            return 0;
+        }
+        if(memo[index]!=-1) return memo[index];
+        int sp = dp(nums,index-1);
+        int res=0;
+        res = max(nums[index],sp+nums[index]);
+        // cout<<res<<endl;
+        // memo[index] =max(res,0); //[-1]
+        memo[index] =res;
+        return memo[index];
+    }
+
+};

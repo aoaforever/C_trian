@@ -18,7 +18,7 @@ public:
                 TreeNode* node = q.front();
                 q.pop();
 
-                //判断是否达标
+                //判断是否达标,他要的是叶子节点，因此是&&
                 if(node->left==NULL&&node->right==NULL){
                     return depth;
                 }
