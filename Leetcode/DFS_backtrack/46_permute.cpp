@@ -71,6 +71,7 @@ public:
             return;
         }
         for(int i=0;i<nums.size();i++){//轮询一遍就是全排列。
+        //每一层递归的选择列表都是从[0,n-1]，只是用了used做了剪枝。
             if(used[i]){
                 continue;
             }
@@ -109,6 +110,31 @@ public:
             swap(output[i],output[first]);
         }
 
+    }
+};
+
+class Solution {
+public:
+    vector<vector<int>> res;
+    set<int> used;
+    vector<vector<int>> permute(vector<int>& nums) {
+        vector<int>path;
+        backtrack(nums,0,path);
+        return res;
+    }
+    void backtrack(vector<int>& nums,int index,vector<int>&path){
+        if(index==nums.size()){
+            res.push_back(path);
+            return;
+        }
+        for(int i=0;i<nums.size();i++){
+            if(used.count(nums[i])) continue;
+            path.push_back(nums[i]);
+            used.insert(nums[i]);
+            backtrack(nums,index+1,path);
+            path.pop_back();
+            used.erase(nums[i]);
+        }
     }
 };
 

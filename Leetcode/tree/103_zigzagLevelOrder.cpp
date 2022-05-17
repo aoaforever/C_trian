@@ -101,5 +101,35 @@ public:
         return res;
     }
 };
+
+
+class Solution {
+public:
+    vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+        queue<TreeNode*> s;
+        if(root==NULL) return {};
+        s.push(root);
+        vector<vector<int>> res;
+        bool flag =false;
+        while (!s.empty())
+        {
+            int sz = s.size();
+            vector<int> tmp;
+            for(int i=0;i<sz;i++){
+                TreeNode* q = s.front();
+                s.pop();
+                tmp.push_back(q->val);
+                if(q->left) s.push(q->left);
+                if(q->right) s.push(q->right);
+            }
+            if(flag) {
+                reverse(tmp.begin(),tmp.end());
+            }
+            flag = !flag;
+            res.emplace_back(tmp);
+        }
+        return res;
+    }
+};
 // @lc code=end
 
