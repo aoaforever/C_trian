@@ -1,6 +1,31 @@
 #include <vector>
 #include <limits.h>
+#include<iostream>
+
+#include<algorithm>
+
 using namespace std;
+//这种每次取最大的硬币是不对的，
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        sort(coins.begin(),coins.end());
+        
+        int count =0;
+        for(int i=coins.size()-1;i>=0;i--){
+            if(amount/coins[i]>0){
+                int sum=0;
+                count += amount/coins[i];
+                sum += amount/coins[i]* coins[i];
+                amount -= sum;
+                cout<<count<<"   "<<amount<<endl;
+            }
+        }
+        if(amount==0) return count;
+        return -1;
+    }
+};
+
 
 class Solution {
 public:
@@ -97,4 +122,35 @@ public:
 
 
 
+};
+
+
+class Solution {
+public:
+    vector<int> memo;
+    int coinChange(vector<int>& coins, int amount) {
+        memo.resize(amount+1,-666);
+        sort(coins.begin(),coins.end());
+        dp(coins,amount);
+
+        return memo[amount];
+    }
+    int dp(vector<int>& coins,int amount){
+        if(amount<0) return -1;
+        if(amount==0) {
+            memo[amount]=0;
+            return 0;
+            }
+        if(memo[amount]!= -666) return memo[amount];
+        int res=INT_MAX;
+
+        for(auto& c :coins){
+            int subproblem = dp(coins,amount-c);
+            if(subproblem==-1) continue;//当前硬币太大，跳过，如果一直跳过，则res=INT_MAX
+            res = min(res,subproblem+1);
+        }
+        
+        memo[amount] = (res==INT_MAX)?-1:res;
+        return memo[amount];
+    }
 };

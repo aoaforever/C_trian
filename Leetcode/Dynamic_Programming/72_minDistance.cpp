@@ -47,3 +47,36 @@ public:
         }
     }
 };
+
+class Solution {
+public:
+    int s1,s2;
+    vector<vector<int>> memo;
+    int minDistance(string word1, string word2) {
+        s1=word1.size();
+        s2=word2.size();
+        memo = vector<vector<int>>(s1,vector<int>(s2,-1));
+        return dp(word1,0,word2,0);
+    }
+    int dp(string& word1,int i,string& word2, int j){
+        if(i==s1) return s2-j;
+        if(j==s2) return s1-i;
+
+
+        int res= INT_MAX;   
+        if(memo[i][j]!=-1) return memo[i][j];
+
+        if(word1[i]==word2[j]){
+            res = dp(word1,i+1,word2,j+1);
+        }
+        else{
+            int replace = dp(word1,i+1,word2,j+1);
+            int del = dp(word1,i+1,word2,j);
+            int insert = dp(word1,i,word2,j+1);
+            res = min(replace,min(del,insert))+1;
+        }
+        memo[i][j] = res;
+        return res;
+        
+    }
+};
