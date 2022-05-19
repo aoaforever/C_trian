@@ -36,3 +36,24 @@ public:
         return dp[N][0];
     }
 };
+
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int s = prices.size();
+        vector<vector<int>>dp(s+1,vector<int>(2));
+        dp[0][0] = 0;
+        dp[0][1] = INT_MIN;
+        for(int i=1;i<s+1;i++){
+            if(i<2){
+                dp[i][0] = max(dp[i-1][0],dp[i-1][1]+prices[i-1]);
+                dp[i][1] = max(dp[i-1][1],dp[i-1][0]-prices[i-1]);//表示无限交易次数
+                continue;
+            }
+            dp[i][0] = max(dp[i-1][0],dp[i-1][1]+prices[i-1]);
+            dp[i][1] = max(dp[i-1][1],dp[i-2][0]-prices[i-1]);//表示无限交易次数
+        }
+        return dp[s][0];
+    }
+};
+

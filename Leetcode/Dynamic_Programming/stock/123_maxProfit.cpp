@@ -70,6 +70,7 @@ public:
     }
 };
 
+//下面是错误的
 class Solution {
 public:
     int maxProfit(vector<int>& prices) {
@@ -91,6 +92,33 @@ public:
         
         }
         return dp_i_0;
+    }
+};
+
+
+//下面是正确的
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int s=prices.size();
+
+        vector<vector<int>>dp(3,vector<int>(2));
+        int k =2;
+        for(int i=0;i<=k;i++){
+            dp[i][0] = 0;
+            dp[i][1] = INT_MIN;
+        }
+        for(int i=1;i<s+1;i++){
+            
+            for(int k=1;k<=2;k++){//遍历顺序怎么确定？
+                //dp[i][k] -> dp[i-1][k-1],是上一层就改变的树，不管你k往哪个方向遍历，都取得是上一层的值，而不是当前层
+                dp[k][0] = max(dp[k][0],dp[k][1]+prices[i-1]);
+                dp[k][1] = max(dp[k][1],dp[k-1][0]-prices[i-1]);//上一层的k-1已经被修改完了，不需要中间变量存储
+            }
+        }
+        return dp[2][0];
+
+    
     }
 };
 
