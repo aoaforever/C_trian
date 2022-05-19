@@ -59,6 +59,7 @@ public:
     }
 };
 
+//下面这个是错的，压缩失败
 class Solution {
 public:
     int maxProfit(vector<int>& prices) {
@@ -80,6 +81,25 @@ public:
         
         }
         return dp_i_0;
+    }
+};
+
+//这个才是对的，不过还可以再压缩成3个变量
+class Solution {
+public:
+
+    int maxProfit(vector<int>& prices) {
+        int s = prices.size();
+        vector<int>dp(2);
+        dp[0] = 0;
+        dp[1] = INT_MIN;
+        for(int i=1;i<s+1;i++){
+            int tmp = dp[0];
+            dp[0] = max(dp[0],dp[1]+prices[i-1]);
+            dp[1] = max(dp[1],tmp-prices[i-1]);//表示无限交易次数
+        }
+        return dp[0];
+
     }
 };
 
