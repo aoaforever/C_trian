@@ -2,9 +2,8 @@ cmake_minimum_required(VERSION 3.5.1)
 project(Project_threadpool_server)
 
 set( CMAKE_CXX_FLAGS "-std=c++11 -pthread" )
+include_directories(./include)
 add_definitions(-Wall -g )
-add_executable(class_server class_server.cpp)
-add_executable(client client.cpp)
-# target_link_libraries(Project_threadpool_server pthread)
-
-# target_include_directories(Project_threadpool_server PUBLIC /home/aoa_vm/workplace/backend/Project_threadpool_server)
+# set(SOURCE  ./src/threadpool.cpp ./src/User.cpp ./src/class_server.cpp)
+file(GLOB SOURCE "src/*.cpp")
+add_executable(class_server ${SOURCE})
