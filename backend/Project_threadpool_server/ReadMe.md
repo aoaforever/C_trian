@@ -9,6 +9,13 @@ cmake ..
 make
 
 #在build文件夹里就有class_server,和client两个可执行文件
+
+分别在不同的终端中输入:
+./class_server 9999
+
+./client 0 9999
+
+按照客户端提示输入字符串就能实现回射服务器功能
 ```
 
 2. 使用bash
