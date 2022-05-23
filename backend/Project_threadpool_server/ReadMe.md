@@ -1,3 +1,24 @@
+# How to Use
+1. 使用cmake
+```bash
+#先进入项目的根目录
+cd YOUR_PROJECT_PATH/Project_threadpool_server
+mkdir ./build
+cd build 
+cmake ..
+make
+
+#在build文件夹里就有class_server,和client两个可执行文件
+```
+
+2. 使用bash
+```bash
+cd YOUR_PROJECT_PATH/Project_threadpool_server
+cd ./src
+bash build.sh
+#就会在src目录下生成class_server和client两个可执行文件
+```
+
 # 回射服务器
 使用的方法：
 1. 多线程
