@@ -1,87 +1,56 @@
+/*
+ * @lc app=leetcode.cn id=416 lang=cpp
+ *
+ * [416] 分割等和子集
+ *
+ * https://leetcode-cn.com/problems/partition-equal-subset-sum/description/
+ *
+ * algorithms
+ * Medium (51.64%)
+ * Likes:    1322
+ * Dislikes: 0
+ * Total Accepted:    268.7K
+ * Total Submissions: 519K
+ * Testcase Example:  '[1,5,11,5]'
+ *
+ * 给你一个 只包含正整数 的 非空 数组 nums 。请你判断是否可以将这个数组分割成两个子集，使得两个子集的元素和相等。
+ * 
+ * 
+ * 
+ * 示例 1：
+ * 
+ * 
+ * 输入：nums = [1,5,11,5]
+ * 输出：true
+ * 解释：数组可以分割成 [1, 5, 5] 和 [11] 。
+ * 
+ * 示例 2：
+ * 
+ * 
+ * 输入：nums = [1,2,3,5]
+ * 输出：false
+ * 解释：数组不能分割成两个元素和相等的子集。
+ * 
+ * 
+ * 
+ * 
+ * 提示：
+ * 
+ * 
+ * 1 
+ * 1 
+ * 
+ * 
+ */
 
-#include <iostream>
-#include <vector>
-#include <map>
-
+// @lc code=start
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include <numeric>
+#include <unordered_map>
+#include <string>
 using namespace std;
-
-class Solution {
-public:
-    
-    map<pair<int,int>,bool> memo; 
-    bool canPartition(vector<int>& nums) {
-        
-        int sum=0;
-        for(auto& n:nums){
-            sum += n;
-        }
-        if(sum%2==1){return false;}
-        sum = sum/2;
-        
-        return dp(nums.size(),sum,nums);
-    }
-
-    //dp表示前i个物品下，能否装满w。
-    bool dp(int i,int w,vector<int>&nums){
-        pair<int,int> key(i,w);
-        if(w==0){//如果背包装满了，那就成功了
-            memo[key] = true;
-            return memo[key];
-        }
-        if(i<1){
-            return false;
-        }
-        
-        if(memo.count(key)){
-            return memo[key];
-        }
-        if(w-nums[i-1]<0){
-            memo[key] = dp(i-1,w,nums);
-            return memo[key];
-        }
-        else{
-            memo[key] = dp(i-1,w,nums)||dp(i-1,w-nums[i-1],nums);
-            return memo[key];
-             
-        }
-    }
-};
-
-class Solution {
-public:
-    
-    bool canPartition(vector<int>& nums) {
-        
-        int sum=0;
-        for(auto& n:nums){
-            sum += n;
-        }
-        if(sum%2==1){return false;}
-        sum = sum/2;
-        vector<vector<bool>> dp(nums.size()+1,vector<bool>(sum+1));
-
-        //base case,在j=0下，不需要物品就可以装满。
-        for(int i=0;i<=nums.size();i++){
-            dp[i][0] = true;
-        }
-        //dp[i][j]的定义： 在前i个物品下，是否能够刚好装满j？
-        for(int i=1;i<=nums.size();i++){
-            for(int j=1;j<=sum;j++){
-                if(j-nums[i-1]<0){
-                    dp[i][j] = dp[i-1][j];
-                }
-                else{
-                    dp[i][j] = dp[i-1][j] || dp[i-1][j-nums[i-1]];
-                }        
-            }
-        }
-        return dp[nums.size()][sum];
-    }
-};
-
-
-
-
 class Solution {
 public:
     vector<bool> used;
@@ -149,12 +118,29 @@ public:
     }
 };
 
+// class Solution {
+// public:
+//     unordered_map<string,bool> memo;
+//     bool canPartition(vector<int>& nums) {
+//         int sum = accumulate(nums.begin(),nums.end(),0);
+//         if(sum%2!=0) return false;
+//         int target = sum/2;
+//         return dp(nums,0,target);
+//     }
+//     //这种可以跳跃数字的怎么搞？把装与不装体现出来
 
-// int main(){
-//     pair<int,int> a(1,2);
-//     // bool a = -1;
-//     // cout<<pair<int,int>{1,2}
-//     cout<<a.first<<a.second<<endl;
-//     // printf("%d",a);
-//     return 0;
-// }
+//     //那就是选择所有的nums，组成target一次就可以了
+//     bool dp(vector<int>&nums,int index,int target){
+        
+//         if(target==0) return true;
+//         if(target<0||index==nums.size()) return false;
+//         // cout<<index<<endl;
+//         string key = to_string(index)+","+to_string(target);
+//         if(memo.count(key)) return memo[key];
+//         bool res = dp(nums,index+1,target-nums[index])||dp(nums,index+1,target);//你可以装入也可以不装入
+//         memo[key] =res;
+//         return res;
+//     }
+// };
+// @lc code=end
+
