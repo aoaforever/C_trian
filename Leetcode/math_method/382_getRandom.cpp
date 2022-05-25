@@ -28,6 +28,7 @@ public:
     }
 };
 
+//我不需要另外的数组，
 /**
  * Your Solution object will be instantiated and called as such:
  * Solution* obj = new Solution(head);
