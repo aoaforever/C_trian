@@ -59,3 +59,28 @@ public:
         return index;//返回下标啊操
     }
 };
+
+
+class Solution {
+public:
+    // vector<int> nums;
+    vector<int>::iterator begin;
+    vector<int>::iterator end;
+    Solution(vector<int>& nums) {
+        // this->nums = nums;
+        begin = nums.begin();
+        end = nums.end();
+    }
+    
+    int pick(int target) {
+        int size=0;
+        int res;
+        for(vector<int>::iterator i=begin;i!=end;i++){
+            if(*i==target){
+                size++;
+                if(rand()%size==0) res=i-begin;
+            }
+        }
+        return res;
+    }
+};
