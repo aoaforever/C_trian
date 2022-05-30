@@ -3,10 +3,10 @@
  *
  * [382] 链表随机节点
  *
- * https://leetcode-cn.com/problems/linked-list-random-node/description/
+ * https://leetcode.cn/problems/linked-list-random-node/description/
  *
  * algorithms
- * Medium (72.07%)
+ * Medium (72.09%)
  * Likes:    286
  * Dislikes: 0
  * Total Accepted:    46.4K
@@ -78,12 +78,26 @@
  */
 class Solution {
 public:
-    Solution(ListNode* head) {
+    ListNode* head;
 
+    Solution(ListNode* head) {
+        this->head = head;
+        
     }
     
     int getRandom() {
-
+        int size =0;
+        ListNode* q=head;
+        int res;
+        while (q)
+        {
+            size++;
+            if(rand()%size==0)    res =q->val;
+            q=q->next;
+        }
+        
+        
+        return res;
     }
 };
 
