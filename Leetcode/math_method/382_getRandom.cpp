@@ -49,6 +49,7 @@ public:
         while(p!=NULL){
             size++;
             if(rand()%size == 0){
+                //生成[0,size)的整数，这个整数=0的概率为1/size
                 res = p->val;
             }
             p=p->next;
