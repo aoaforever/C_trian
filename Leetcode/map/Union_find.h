@@ -45,7 +45,7 @@ public:
         }
         return a;
     };
-    int count(){
+    int get_count(){
         return count;
     }
 };
