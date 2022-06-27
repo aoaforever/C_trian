@@ -43,3 +43,36 @@ public:
         return res;
     }
 };
+
+
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        sort(intervals.begin(),intervals.end(),[](vector<int>&a, vector<int>&b){
+            if(a[0]==b[0]) return a[1]>b[1];
+            return a[0]<b[0];
+        });
+
+        //存在合并就两种情况，太短合并， 合成一个长的
+        int start = intervals[0][0], end = intervals[0][1];
+        vector<vector<int>> res = {{start,end}};
+        for(vector<int>& i :intervals){
+            int cur_start = i[0];
+            int cur_end = i[1];
+            if(cur_end<=end){
+                //你没了，直接被吞
+                continue;
+            }
+            else if(cur_start<=end&&cur_end>end){
+                res.back()[1]=cur_end;
+                end = cur_end;
+            }
+            else if(cur_start>start){
+                res.push_back({cur_start,cur_end});
+                start = cur_start;
+                end=cur_end;
+            }
+        }
+        return res;
+    }
+};
