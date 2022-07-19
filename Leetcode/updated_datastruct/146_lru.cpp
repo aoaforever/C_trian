@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <list>
 using namespace std;
 
 //节点类。拥有指向前后的指针
@@ -260,11 +261,69 @@ public:
     }
 };
 
+/*//////////////////////////////////////*/
+class LRUCache {
+public:
+    int capacity;
+    list<pair<int,int>> lru;
 
 
+    unordered_map<int,list<pair<int,int>>::iterator> keytonode;
+    //每个key对应一个链表节点迭代器
+    LRUCache(int capacity) {
+        this->capacity = capacity;
+
+    }
+    
+    int get(int key) {
+        //key被用过，删除重新添加。
+        //如果没有这个key，返回-1
+        if(!keytonode.count(key)) return -1;
+        auto ptr = keytonode[key];
+        int val = (*ptr).second;
+
+        lru.erase(ptr);
+        lru.push_back({key,val});
+        keytonode[key] = prev(lru.end());
+        return val;
+    }
+    
+    void put(int key, int value) {
+        //如果存在这个key，删除重新添加
+        if(keytonode.count(key)){
+            lru.erase(keytonode[key]);
+            lru.push_back({key,value});
+            keytonode[key] = prev(lru.end());
+        }
+        else{
+            if(lru.size()>=capacity) del();
+            lru.push_back({key,value});
+            keytonode[key] = prev(lru.end());
+            // capacity++; //根本就不需要增加容量？？你想什么呢？
+        }
+    }
+    void del(){
+        auto node = lru.begin();
+        int key = (*node).first;
+        keytonode.erase(key);
+        lru.pop_front();
+    }
+
+
+};
+
+/**
+ * Your LRUCache object will be instantiated and called as such:
+ * LRUCache* obj = new LRUCache(capacity);
+ * int param_1 = obj->get(key);
+ * obj->put(key,value);
+ */
 
 
 
 int main(){
+    unordered_map<int,int> a;
+    a[10] = 20;
+    auto p = a[10];
     return 0;
 }
