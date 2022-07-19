@@ -55,3 +55,42 @@ public:
 };
 
 
+//二刷不会，忘了哈希表要几个，忘了什么时候给窗口加1
+/***********/
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        unordered_map<char,int> n,window;
+
+        for(char& c:p){
+            n[c]++;
+        }
+        int need = n.size();
+        vector<int> res;
+        int l=0,r=0;
+        int m=s.size();
+        int valid=0;
+        while(l<m&&r<m){
+            char c = s[r++];
+            if(n.count(c)){
+                window[c]++;
+                if(window[c]==n[c]){
+                    valid++;
+                }
+            }
+            while((r-l)>=p.size()){
+                if(valid==n.size()){
+                    res.push_back(l);
+                }
+                char d = s[l++];
+                if(n.count(d)){
+                    if(window[d]==n[d]){
+                        valid--;
+                    }
+                    window[d]--;
+                }
+            }
+        }
+        return res;
+    }
+};
