@@ -1405,6 +1405,3 @@ backend/WebServer-master/test/test.cpp
 backend/WebServer-master/webbench-1.5/Makefile
 backend/WebServer-master/webbench-1.5/socket.c
 backend/WebServer-master/webbench-1.5/webbench.c
-backend/TinyWebServer-master/2022_02_26_ServerLog
-backend/TinyWebServer-master/2022_02_27_ServerLog
-backend/TinyWebServer-master/2022_07_28_ServerLog
