@@ -84,3 +84,46 @@ public:
     }
 
 };
+
+/*
+延伸——获取最大序列的起始和结束位置
+可以使用我们的第一种方法也就是动态规划的方法来找到这个位置，将以这个元素结尾的的最大子序列的位置找出来，然后每次比较最大值的时候更新一下最大值的位置就行了
+*/
+
+public int maxSubArrayPosition(int[] nums) {
+    if (nums == null) {
+        return 0;
+    }
+
+    int start = 0;
+    int end = 0;
+    int subStart = 0;
+    int subEnd = 0;
+    int max = nums[0];    // 全局最大值
+    int subMax = nums[0];  // 前一个子组合的最大值
+    for (int i = 1; i < nums.length; i++) {
+        if (subMax > 0) {
+            // 前一个子组合最大值大于0，正增益，更新最后元素位置
+            subMax = subMax + nums[i];
+            subEnd++;
+        } else {
+            // 前一个子组合最大值小于0，抛弃前面的结果，更新当前最大值位置
+            subMax = nums[i];
+            subStart = i;
+            subEnd = i;
+        }
+        // 计算全局最大值，更新位置，将全局最优解的位置更新
+        if (subMax > max) {
+            max = subMax;
+            start = subStart;
+            end = subEnd;
+        }
+    }
+
+    System.out.println("[" + start + ","+ end +"]");
+    return max;
+
+作者：lizhiqiang-3
+链接：https://leetcode.cn/problems/maximum-subarray/solution/zheng-li-yi-xia-kan-de-dong-de-da-an-by-lizhiqiang/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。

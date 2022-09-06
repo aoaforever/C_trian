@@ -68,80 +68,147 @@
 #include <list>
 #include <queue>
 using namespace std;
+// class Solution {
+// public:
+//     class State{
+//     public:
+//         int id;
+//         //从start节点到当前节点的距离，也就是深度
+//         int distFromStart;
+//         State(int id,int distFromStart){
+//             this->id = id;
+//             this->distFromStart = distFromStart;
+//         };
+//         friend bool operator<(State& a, State& b){
+//             return a.distFromStart<b.distFromStart;
+//         }
+        
+//     };
+
+//     //需要构建邻接表
+//     vector<list<vector<int>>> graph;
+//     int networkDelayTime(vector<vector<int>>& times, int n, int k) {
+//         graph = vector<list<vector<int>>>(n+1);//因为从1开始编号
+//         for(vector<int>& t:times){
+//             int from = t[0];
+//             int to = t[1];
+//             int weight = t[2];
+//             graph[from].push_back({to,weight});
+//         }
+//         vector<int> distTo = dijkstra(k);
+
+//         //找到最长的那一条最短路径
+//         int res=0;
+//         for(int i=1;i<distTo.size();i++){
+//             if(distTo[i]==INT_MAX) return -1;
+//             res = max(res, distTo[i]);
+//         }
+//         return res;
+//     }
+//     vector<int> dijkstra(int start){
+//         //定义，distTo[i]的值就是起点start到节点i的最短路径权重
+//         vector<int> distTo(graph.size(),INT_MAX);
+//         distTo[start] =0;
+
+//         priority_queue<State*> pq;
+//         pq.push(new State(start,0));
+//         while (!pq.empty())
+//         {
+//             int sz= pq.size();
+//             for(int i=0;i<sz;i++){
+//                 State* s = pq.top();
+//                 pq.pop();
+
+//                 int curNodeId = s->id;
+//                 int curDistFromStart = s->distFromStart;
+
+//                 //distTo[curNodeId] 相当于如果memo[]已经存在，则直接return
+//                 //由于是贪心，所以如果之前已经算出了更优的结果，那么
+//                 //注意不能是=
+//                 if(curDistFromStart>distTo[curNodeId]) continue;
+
+//                 for(auto& neighbor:graph[curNodeId]){
+//                     int nextId = neighbor[0];
+//                     int distToNextNode = neighbor[1]+distTo[curNodeId];
+
+//                     //更新dp table
+//                     if(distTo[nextId] > distToNextNode){
+//                         distTo[nextId] = distToNextNode;
+//                         pq.push(new State(nextId,distToNextNode));//会有重复的id，但是路径长度可能不同
+//                     }
+//                 }
+
+//             }
+//         }
+//         return distTo;
+//     }
+// };
+// // @lc code=end
+
+
 class Solution {
 public:
-    class State{
-    public:
-        int id;
-        //从start节点到当前节点的距离，也就是深度
-        int distFromStart;
-        State(int id,int distFromStart){
-            this->id = id;
-            this->distFromStart = distFromStart;
+        struct state{
+            int id;
+            int distfromstart;
+            state(int id, int dist):id(id),distfromstart(dist){};
+
+            bool operator<(const state& b) const {
+                return this->distfromstart>b.distfromstart;
+            }
         };
-        friend bool operator<(State& a, State& b){
-            return a.distFromStart<b.distFromStart;
-        }
-        
-    };
-
-    //需要构建邻接表
-    vector<list<vector<int>>> graph;
     int networkDelayTime(vector<vector<int>>& times, int n, int k) {
-        graph = vector<list<vector<int>>>(n+1);//因为从1开始编号
+
+
+
+        vector<list<pair<int,int>>> graph;
+
         for(vector<int>& t:times){
-            int from = t[0];
+            // auto [from,to,dist] = t;
+            int from=t[0];
             int to = t[1];
-            int weight = t[2];
-            graph[from].push_back({to,weight});
-        }
-        vector<int> distTo = dijkstra(k);
+            int dist = t[2];
+            graph[from].emplace_back(to,dist);
 
-        //找到最长的那一条最短路径
-        int res=0;
-        for(int i=1;i<distTo.size();i++){
-            if(distTo[i]==INT_MAX) return -1;
-            res = max(res, distTo[i]);
         }
-        return res;
+
+        vector<int> d = dijkstra(graph,k,n);
+        int m=INT_MAX;
+        for(int& a:d){
+            m = min(m,a);
+            if(a==INT_MAX) return -1;
+        }
+        return m;
     }
-    vector<int> dijkstra(int start){
-        //定义，distTo[i]的值就是起点start到节点i的最短路径权重
-        vector<int> distTo(graph.size(),INT_MAX);
-        distTo[start] =0;
 
-        priority_queue<State*> pq;
-        pq.push(new State(start,0));
-        while (!pq.empty())
-        {
-            int sz= pq.size();
-            for(int i=0;i<sz;i++){
-                State* s = pq.top();
-                pq.pop();
+    vector<int> dijkstra(vector<list<pair<int,int>>> &graph, int k,int n){
+        vector<int> res(graph.size(),INT_MAX);
+        res[k]=0;
 
-                int curNodeId = s->id;
-                int curDistFromStart = s->distFromStart;
+        priority_queue<state> q;
+        q.emplace(k,0);
 
-                //distTo[curNodeId] 相当于如果memo[]已经存在，则直接return
-                //由于是贪心，所以如果之前已经算出了更优的结果，那么
-                //注意不能是=
-                if(curDistFromStart>distTo[curNodeId]) continue;
+        while(!q.empty()){
+            state s = q.top();
+            q.pop();
 
-                for(auto& neighbor:graph[curNodeId]){
-                    int nextId = neighbor[0];
-                    int distToNextNode = neighbor[1]+distTo[curNodeId];
+            if(res[s.id]<s.distfromstart){
+                continue;
+            }
 
-                    //更新dp table
-                    if(distTo[nextId] > distToNextNode){
-                        distTo[nextId] = distToNextNode;
-                        pq.push(new State(nextId,distToNextNode));//会有重复的id，但是路径长度可能不同
-                    }
+            for(pair<int,int>& g:graph[s.id]){
+                // auto [to,dist] = g;
+                int to = g.first;
+                int dist = g.second;
+                int nextdist = s.distfromstart+dist;
+                if(nextdist<res[to]){
+                    res[to] = nextdist;
+                    q.emplace(to,nextdist);
                 }
-
+                
             }
         }
-        return distTo;
+        return res;
+
     }
 };
-// @lc code=end
-

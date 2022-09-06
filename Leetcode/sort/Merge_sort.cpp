@@ -40,10 +40,63 @@ void merge_sort(vector<int> &nums, int l , int r, vector<int> &temp){
     // cout<<endl;
 }
 
+/*https://leetcode.cn/problems/shu-zu-zhong-de-ni-xu-dui-lcof/submissions/*/
+class Solution {
+public:
+    int reversePairs(vector<int>& nums) {
+        if(nums.size()<2) return 0;
+        vector<int> tmp(nums.size());
+        return reversePairs(nums,0,nums.size()-1,tmp);
+    }
+
+    int reversePairs(vector<int>& nums, int left ,int right, vector<int>& tmp){
+        if(left==right) return 0; 
+
+        int mid = left + (right-left)/2;
+
+        int leftc = reversePairs(nums, left, mid, tmp);
+        int rightc = reversePairs(nums, mid+1, right , tmp);
+
+        int count = leftc+ rightc+ merge(nums,left, mid, right, tmp);
+        return count;
+    }
+
+    int merge(vector<int>& nums, int left, int mid, int right, vector<int>& tmp){
+        //归并两个有序数组nums[left...mid], nums[mid+1 ... right]
+        for(int i =left; i<=right; i++){
+            tmp[i]=nums[i];
+        }
+
+        int i = left;
+        int j = mid +1;
+        int count = 0;
+        for(int k=left; k<=right; k++){
+            if(i==mid+1){
+                nums[k] = tmp[j++];
+            }
+            else if(j==right+1){
+                nums[k] = tmp[i++];
+            }
+            else if(tmp[i]<=tmp[j]){
+                nums[k] = tmp[i++];
+            }
+            else{
+                nums[k] = tmp[j++];
+                count += (mid-i+1);
+            }
+        }
+        return count;
+    }
+
+};
+
+
 int main(){
     vector<int> a{1,2,3,9,8,7,6,5,4,3};
     vector<int> tmp(a.size());
-    merge_sort(a,0,a.size(),tmp);
+    Solution s;
+    s.reversePairs(a);
+    // merge_sort(a,0,a.size(),tmp);
     // cout<<"asdas";
     for(auto i : a){
         cout<<i<<" ";
