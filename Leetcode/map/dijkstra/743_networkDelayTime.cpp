@@ -192,10 +192,15 @@ public:
             state s = q.top();
             q.pop();
 
-            if(res[s.id]<s.distfromstart){
+        /* 一个特定的节点由源到id节点的距离+ id 组成，
+            即使是id相同，从源到id的距离也会不同。
+            因此，若有更短的距离，那么此次state可以跳过。
+        */
+            if(res[s.id]<s.distfromstart){//如果已经有一个更优的结果，那么这个节点就不用算了.
                 continue;
             }
 
+            //id节点能去往哪些节点？
             for(pair<int,int>& g:graph[s.id]){
                 // auto [to,dist] = g;
                 int to = g.first;
